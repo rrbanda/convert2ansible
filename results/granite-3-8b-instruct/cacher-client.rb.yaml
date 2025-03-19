@@ -1,0 +1,100 @@
+
+- name: Remove proxy from /etc/apt/apt.conf
+  hosts: all
+  become: true
+  tasks:
+    - name: Remove proxy from /etc/apt/apt.conf
+      command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
+      when: grep Acquire::http::Proxy /etc/apt/apt.conf
+
+- name: Configure apt cacher client
+  hosts: all
+  become: true
+  vars:
+    cacher_ipaddress: "{{ lookup('lookup', 'interface_ipaddress', servers[0], servers[0]['apt']['cacher_interface']) }}"
+    port: "{{ servers[0]['apt']['cacher_port'] }}"
+    proxy_ssl: "{{ servers[0]['apt']['cacher_ssl_support'] }}"
+    bypass: "{{ node['apt']['cache_bypass'] }}"
+  tasks:
+    - name: Create /etc/apt/apt.conf.d/01proxy
+      template:
+        src: 01proxy.erb
+        dest: /etc/apt/apt.conf.d/01proxy
+        owner: root
+        group: root
+        mode: 00644
+        variables:
+          proxy: "{{ cacher_ipaddress }}"
+          port: "{{ port }}"
+          proxy_ssl: "{{ proxy_ssl }}"
+          bypass: "{{ bypass }}"
+      notify:
+        - Run apt-get update
+      when: servers.length > 0
+
+    - name: Delete /etc/apt/apt.conf.d/01proxy
+      file:
+        path: /etc/apt/apt.conf.d/01proxy
+        state: absent
+      when: servers.length == 0
+
+- name: Include apt default recipe
+  include_role:
+    name: apt
+    tasks: default
+
+[OUTPUT]
+- name: Remove proxy from /etc/apt/apt.conf
+  hosts: all
+  become: true
+  tasks:
+    - name: Remove proxy from /etc/apt/apt.conf
+      command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
+      when: grep Acquire::http::Proxy /etc/apt/apt.conf
+
+- name: Configure apt cacher client
+  hosts: all
+  become: true
+  vars:
+    cacher_ipaddress: "{{ lookup('lookup', 'interface_ipaddress', servers[0], servers[0]['apt']['cacher_interface']) }}"
+    port: "{{ servers[0]['apt']['cacher_port'] }}"
+    proxy_ssl: "{{ servers[0]['apt']['cacher_ssl_support'] }}"
+    bypass: "{{ node['apt']['cache_bypass'] }}"
+  tasks:
+    - name: Create /etc/apt/apt.conf.d/01proxy
+      template:
+        src: 01proxy.erb
+        dest: /etc/apt/apt.conf.d/01proxy
+        owner: root
+        group: root
+        mode: 00644
+        variables:
+          proxy: "{{ cacher_ipaddress }}"
+          port: "{{ port }}"
+          proxy_ssl: "{{ proxy_ssl }}"
+          bypass: "{{ bypass }}"
+      notify:
+        - Run apt-get update
+      when: servers.length > 0
+
+    - name: Delete /etc/apt/apt.conf.d/01proxy
+      file:
+        path: /etc/apt/apt.conf.d/01proxy
+        state: absent
+      when: servers.length == 0
+
+- name: Include apt default recipe
+  include_role:
+    name: apt
+    tasks: default
+
+[EXPLANATION]
+The provided Chef Recipe has been converted into an Ansible Playbook. The playbook consists of three plays:
+
+1. Remove proxy from /etc/apt/apt.conf: This play removes any lines containing "Acquire::http::Proxy" from the /etc/apt/apt.conf file.
+2. Configure apt cacher client: This play configures the apt cacher client by creating the /etc/apt/apt.conf.d/01proxy file using a template. It uses variables like cacher_ipaddress, port, proxy_ssl, and bypass to populate the template.
+3. Include apt default recipe: This play includes the default apt recipe from the apt role.
+
+The playbook uses the "when" condition to ensure that tasks are only executed when necessary. For example, the task to create the /etc/apt/apt.conf.d/01proxy file is only executed when there are servers available. Similarly, the task to delete the /etc/apt/apt.conf.d/01proxy file is only executed when there are no servers available.
+
+The playbook assumes that the 01proxy.erb template is available in the same directory as the playbook.

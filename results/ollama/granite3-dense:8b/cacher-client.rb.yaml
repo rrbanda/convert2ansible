@@ -1,0 +1,49 @@
+Here is the Ansible Playbook equivalent of the provided Chef Recipe:
+
+```yaml
+---
+- name: Apt Cacher Client
+  hosts: all
+  vars:
+    cacher_ipaddress: "{{ node['apt']['cacher_ipaddress'] }}"
+    cacher_port: "{{ node['apt']['cacher_port'] }}"
+    cacher_interface: "{{ node['apt']['cacher_interface'] }}"
+    cacher_ssl_support: "{{ node['apt']['cacher_ssl_support'] }}"
+    cache_bypass: "{{ node['apt']['cache_bypass'] }}"
+  tasks:
+    - name: Remove Acquire::http::Proxy lines from /etc/apt/apt.conf
+      command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
+      when: grep Acquire::http::Proxy /etc/apt/apt.conf | success()
+
+    - name: Find apt caching servers
+      set_fact:
+        servers: "{{ servers + search(query) }}"
+      loop:
+        query: "apt_caching_server:true AND chef_environment:#{node['chef_environment']}" if node['apt']['cacher-client']['restrict_environment'] else 'apt_caching_server:true'
+
+    - name: Configure apt proxy
+      template:
+        src: 01proxy.erb
+        dest: /etc/apt/apt.conf.d/01proxy
+        owner: root
+        group: root
+        mode: 00644
+      when: servers|length > 0
+      vars:
+        proxy: "{{ cacher_ipaddress }}"
+        port: "{{ cacher_port }}"
+        proxy_ssl: "{{ cacher_ssl_support }}"
+        bypass: "{{ cache_bypass }}"
+      notify:
+        - run apt-get update
+
+    - name: Delete apt proxy config if no caching server found
+      file:
+        path: /etc/apt/apt.conf.d/01proxy
+        state: absent
+      when: servers|length == 0
+
+    - name: Include apt default recipe
+      include_role:
+        name: apt
+```

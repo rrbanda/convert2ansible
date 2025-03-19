@@ -1,0 +1,89 @@
+<think>
+Okay, so the user wants me to take a Puppet module and convert it into an Ansible Playbook. They specified that I should only provide the YAML code without any comments or explanations. The input provided is a Puppet class called 'apache' with some parameters and logic.
+
+First, I need to understand what the Puppet code does. It seems like it's managing the Apache HTTP Server. Depending on whether $disable is "false" or not, it either installs the package and runs the service or removes it and stops it. Then, based on the operating system and architecture, it selects the appropriate package name.
+
+So, for Ansible, I'll need to structure this as a Playbook with roles and tasks. The first thing is to determine how to handle the disable parameter. In Puppet, if $disable is "false", the server is enabled; otherwise, it's disabled. So in Ansible, I can use a conditional block to set the state.
+
+Next, selecting the package name based on the OS and architecture. In Ansible, I can check the facts for the operating system type and the architecture. If it's CentOS or RedHat and x86_64, use httpd.x86_64; else, use httpd.i386.
+
+Then, handling the configuration file. The Puppet code uses a source from 'puppet:///modules/apache/httpd.conf' when $apacheconf is "default". In Ansible, I can copy the file from the module path using copy, with a condition to only copy if $apacheconf is set.
+
+For services, since Ansible uses systemd by default on RHEL/CentOS, I'll need to use the service module and set enable and ensure states. If disable is true, I have to stop the service and possibly remove it.
+
+I also need to make sure that the file mode and ownership are set correctly, similar to the Puppet code. Using the copy module with a mode parameter should handle that.
+
+Putting this all together, I'll structure the Playbook with two roles: one for disabling Apache and another for enabling it. The tasks in each role will check the disable flag, select the package, copy the config if needed, and manage the service accordingly.
+
+I should also ensure that variables are properly handled, especially since $apacheconf is a parameter that might be passed from the inventory or command line. Using variable facts like factset 'os' for os家族, and 'arch' for architecture will help in conditionals.
+
+Finally, I'll write the YAML playbooks without any comments, as per the user's request, ensuring each task is clearly defined with the appropriate handlers and conditions.
+</think>
+
+```yaml
+---
+- name: Apache Configuration
+  hosts: all
+  become: apache
+  tags: apache
+  
+  roles:
+    - role: disable_apache
+      when: disable | true
+      
+    - role: enable_apache
+      when: disable | false
+      
+  vars:
+    disable: "{{ disable }}"
+    apacheconf: "{{ apacheconf }}"
+    
+  tasks:
+    - name: Disable Apache if enabled
+      ignore_errors: yes
+      block:
+        - name: Stop Apache service
+          service:
+            name: httpd
+            state: stopped
+            enabled: false
+          
+        - name: Remove Apache package
+          package:
+            name: httpd
+            state: absent
+          
+      when: disable | true
+    
+    - name: Enable Apache if not disabled
+      ignore_errors: yes
+      block:
+        - name: Start Apache service
+          service:
+            name: httpd
+            state: running
+            enabled: true
+          
+        - name: Install or update Apache package
+          package:
+            name: httpd
+            ensure: present
+          
+      when: disable | false
+    
+    - name: Install/Update configuration file
+      copy:
+        src: "{{ apacheconf ? { 'default': '/usr/share/httpd/conf/httpd.conf' } : ('httpd.conf') }}"
+        dest: "/etc/httpd/conf/httpd.conf"
+        mode: 0644
+        owner: root
+        group: root
+        remote_src: yes
+      when: apacheconf | defined
+        
+    - name: Set facts for architecture check
+      set_fact:
+        httpd_arch:
+          "'x86_64'": true
+          "'i386'": false
+```

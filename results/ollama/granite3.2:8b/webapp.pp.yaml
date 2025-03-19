@@ -1,0 +1,131 @@
+```yaml
+---
+- name: Deploy Rails Webapp
+  hosts: all
+
+  vars:
+    WEBAPP_PATH: "/opt/webapps/rails"
+    service_webapp_repo: "{{ lookup('env', 'service_webapp_repo') }}"
+    service_webapp_tag: "{{ lookup('env', 'service_webapp_tag') }}"
+    db_user: "{{ lookup('env', 'db_user') }}"
+    db_password: "{{ lookup('env', 'db_password') }}"
+    db_name: "{{ lookup('env', 'db_name') }}"
+    db_ip: "{{ lookup('env', 'db_ip') }}"
+
+  tasks:
+
+    - name: Ensure required packages are installed
+      apt:
+        name:
+          - rubygems
+          - ruby-dev
+          - libxml2-dev
+          - libxslt-dev
+          - libsqlite3-dev
+          - libmysqlclient-dev
+        state: present
+
+    - name: Install bundler
+      gem:
+        name: bundler
+        state: present
+        gem_binary: /usr/bin/gem
+
+    - name: Ensure apache is installed and configured
+      apt:
+        name: apache2
+        state: present
+
+    - name: Create webapps directory
+      file:
+        path: "{{ WEBAPP_PATH }}"
+        state: directory
+        mode: '0755'
+
+    - name: Clone webapp repo
+      git:
+        repo: "{{ service_webapp_repo }}"
+        dest: "{{ WEBAPP_PATH }}"
+        update: yes
+
+    - name: Checkout specific tag
+      command: git checkout {{ service_webapp_tag }}
+      args:
+        chdir: "{{ WEBAPP_PATH }}"
+        creates: "{{ WEBAPP_PATH }}"
+      when: service_webapp_tag is defined
+
+    - name: Add unicorn to Gemfile.local
+      copy:
+        dest: "{{ WEBAPP_PATH }}/Gemfile.local"
+        content: |
+          gem 'unicorn'
+
+    - name: Install dependencies
+      command: bundle install --without development test rmagick postgresql
+      args:
+        chdir: "{{ WEBAPP_PATH }}"
+      when: service_webapp_tag is defined
+
+    - name: Generate secret key base
+      command: bundle exec rake generate_session_store
+      args:
+        chdir: "{{ WEBAPP_PATH }}"
+      when: service_webapp_tag is defined
+
+    - name: Configure database.yml
+      template:
+        src: 'database.yml.j2'
+        dest: '{{ WEBAPP_PATH }}/config/database.yml'
+      vars:
+        db_user: "{{ db_user }}"
+        db_password: "{{ db_password }}"
+        db_name: "{{ db_name }}"
+        db_ip: "{{ db_ip }}"
+      when: service_webapp_tag is defined
+
+    - name: Run database migrations and load default data
+      command: bundle exec rake db:migrate RAILS_ENV=production && bundle exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=en
+      args:
+        chdir: "{{ WEBAPP_PATH }}"
+      when: service_webapp_tag is defined
+
+    - name: Create rails user
+      user:
+        name: rails
+        shell: /bin/sh
+        home: "{{ WEBAPP_PATH }}"
+
+    - name: Set permissions for webapps directories
+      file:
+        path:
+          - '{{ WEBAPP_PATH }}/files'
+          - '{{ WEBAPP_PATH }}/log'
+          - '{{ WEBAPP_PATH }}/tmp'
+          - '{{ WEBAPP_PATH }}/public'
+        owner: rails
+        mode: '0755'
+
+    - name: Configure unicorn
+      upstart_job:
+        appname: unicorn
+        command: start-stop-daemon --start -c rails -d {{ WEBAPP_PATH }} --exec /usr/local/bin/bundle -- exec unicorn_rails -E production
+        requires:
+          - file: '{{ WEBAPP_PATH }}/Gemfile.local'
+          - command: 'rake tasks'
+          - command: 'generate secret'
+
+    - name: Disable default apache site
+      shell: /usr/sbin/a2dissite default
+      when: service_webapp_tag is defined
+
+    - name: Configure apache vhost
+      apache_vhost:
+        name: webapp
+        template: 'webapp.erb'
+        docroot: "{{ WEBAPP_PATH }}"
+        requires:
+          - command: 'rake tasks'
+          - command: 'generate secret'
+          - shell: 'disable default vhost'
+```

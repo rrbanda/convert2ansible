@@ -1,0 +1,93 @@
+
+ansible-playbook code:
+
+```yaml
+- name: Configure MySQL
+  hosts: mysql_servers
+  become: yes
+  vars:
+    root_password: 'UNSET'
+    old_root_password: ''
+    bind_address: '{{ mysql_bind_address }}'
+    port: '{{ mysql_port }}'
+    etc_root_password: '{{ mysql_etc_root_password }}'
+    service_name: '{{ mysql_service_name }}'
+    config_file: '{{ mysql_config_file }}'
+    socket: '{{ mysql_socket }}'
+    pidfile: '{{ mysql_pidfile }}'
+    datadir: '{{ mysql_datadir }}'
+    ssl: '{{ mysql_ssl }}'
+    ssl_ca: '{{ mysql_ssl_ca }}'
+    ssl_cert: '{{ mysql_ssl_cert }}'
+    ssl_key: '{{ mysql_ssl_key }}'
+    log_error: '{{ mysql_log_error }}'
+    default_engine: 'UNSET'
+    root_group: '{{ mysql_root_group }}'
+    restart: '{{ mysql_restart }}'
+
+  tasks:
+    - name: Ensure root user password file is present
+      file:
+        owner: 'root'
+        group: '{{ root_group }}'
+        mode: '0400'
+        notify:
+          - restart_mysql_service
+
+    - name: Validate SSL parameters
+      assert:
+        that:
+          - ssl is not defined or ssl_ca is defined
+          - ssl is not defined or ssl_cert is defined
+          - ssl is not defined or ssl_key is defined
+
+    - name: Restart MySQL service
+      service:
+        name: '{{ service_name }}'
+        state: restarted
+      when: restart
+      register: mysql_restart_result
+      notify:
+        - restart_mysql_service
+
+    - name: Set MySQL root password
+      command: "mysqladmin -u root {{ old_root_password | default('') }} password '{{ root_password }}'"
+      when: root_password != 'UNSET'
+      register: set_mysql_rootpw_result
+      changed_when: set_mysql_rootpw_result.rc != 0
+      notify:
+        - restart_mysql_service
+
+    - name: Create root .my.cnf file
+      template:
+        src: 'my.cnf.pass.erb'
+        dest: '/root/.my.cnf'
+      when: root_password != 'UNSET'
+      register: create_root_my_cnf
+      require_tasks:
+        - Set MySQL root password
+
+    - name: Create /etc/my.cnf file
+      template:
+        src: 'my.cnf.erb'
+        dest: '{{ config_file }}'
+      when: root_password != 'UNSET'
+      register: create_etc_my_cnf
+      require_tasks:
+        - Set MySQL root password
+
+    - name: Ensure MySQL directories are present
+      file:
+        path:
+          - '/etc/mysql'
+          - '{{ config_file | dirname }}'
+        state: directory
+        mode: '0755'
+
+    - name: Ensure root user password file is present
+      file:
+        path: '/root/.my.cnf'
+        ensure: present
+      when: root_password == 'UNSET'
+
+```

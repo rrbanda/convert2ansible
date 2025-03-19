@@ -1,0 +1,41 @@
+Here is the equivalent Ansible Playbook:
+
+```yaml
+---
+- name: Configure Apache
+  hosts: all
+  vars:
+    disable: "false"
+    apacheconf: "default"
+  tasks:
+    - name: Install Apache
+      package:
+        name: httpd
+        state: present
+      when: ansible_os_family in ['RedHat', 'CentOS'] and ansible_architecture == 'x86_64'
+
+    - name: Install Apache (i386)
+      package:
+        name: httpd
+        state: present
+      when: ansible_os_family in ['RedHat', 'CentOS'] and ansible_architecture != 'x86_64'
+
+    - name: Enable/Disable Apache Service
+      service:
+        name: httpd
+        enabled: "{{ enable }}"
+        state: "{{ ensure }}"
+      when: ansible_os_family in ['RedHat', 'CentOS']
+      loop:
+        - {'enable': True, 'ensure': 'running'}
+        - {'enable': False, 'ensure': 'stopped'}
+
+    - name: Configure Apache Configuration File
+      copy:
+        src: "puppet:///modules/apache/httpd.conf"
+        dest: "/etc/httpd/conf/httpd.conf"
+        owner: root
+        group: root
+        mode: 0644
+      when: apacheconf == 'default'
+```

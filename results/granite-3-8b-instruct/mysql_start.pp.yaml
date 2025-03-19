@@ -1,0 +1,25 @@
+
+```yaml
+---
+- name: Create MySQL database
+  hosts: localhost
+  vars:
+    mysql_root_password: "your_root_password"
+    mysql_database: "your_database_name"
+
+  tasks:
+    - name: Ensure MySQL server is installed
+      apt:
+        name: mysql-server
+        state: present
+
+    - name: Start and enable MySQL service
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+
+    - name: Create MySQL database
+      command: /usr/bin/mysql -uroot -e "create database {{ mysql_database }}"
+      when: "'your_database_name' not in /usr/bin/mysql -uroot"
+```

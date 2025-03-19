@@ -1,0 +1,24 @@
+Here is the equivalent Ansible Playbook for the provided Puppet module:
+
+```yaml
+- name: Create MySQL database
+  hosts: localhost
+  gather_facts: false
+  vars:
+    db_name: "{{ db_name }}"
+  tasks:
+    - name: Ensure MySQL service is running
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+      when: ansible_os_family == 'RedHat'
+
+    - name: Create database
+      command: /usr/bin/mysql -uroot -e "create database {{ db_name }}"
+      register: create_db
+      until: create_db.rc == 0
+      retries: 10
+      delay: 5
+      when: ansible_os_family == 'RedHat'
+```

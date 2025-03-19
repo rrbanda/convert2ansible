@@ -1,0 +1,59 @@
+
+```yaml
+---
+- name: Ensure Apache is installed and configured
+  hosts: all
+  vars:
+    disable: "false"
+    apacheconf: "default"
+
+  tasks:
+    - name: Check if Apache should be installed
+      set_fact:
+        installed: "present"
+        enable: true
+        ensure: "running"
+      when: disable != "false"
+
+    - name: Check if Apache should be stopped
+      set_fact:
+        installed: "absent"
+        enable: false
+        ensure: "stopped"
+      when: disable == "false"
+
+    - name: Install Apache on CentOS/RedHat
+      package:
+        name: httpd
+        state: "{{ installed }}"
+      when:
+        - ansible_os_family == "RedHat"
+        - installed == "present"
+        - ansible_architecture == "x86_64"
+
+    - name: Install Apache on CentOS/RedHat
+      package:
+        name: httpd
+        state: "{{ installed }}"
+      when:
+        - ansible_os_family == "RedHat"
+        - installed == "present"
+        - ansible_architecture == "i386"
+
+    - name: Ensure Apache service is running/stopped
+      service:
+        name: httpd
+        state: "{{ ensure }}"
+        enabled: "{{ enable }}"
+      when:
+        - ansible_os_family == "RedHat"
+
+    - name: Configure Apache
+      copy:
+        dest: /etc/httpd/conf/httpd.conf
+        owner: root
+        group: root
+        mode: 0644
+        content: "{{ lookup('file', 'puppet:///modules/apache/httpd.conf') }}"
+      when: apacheconf == "default"
+```

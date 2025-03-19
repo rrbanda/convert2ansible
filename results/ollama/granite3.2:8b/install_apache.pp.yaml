@@ -1,0 +1,44 @@
+```yaml
+---
+- name: Configure Apache
+  hosts: all
+
+  vars:
+    httpd_package:
+      - centos:
+        name: httpd.x86_64
+        state: "{{ installed }}"
+      - redhat:
+        name: httpd.i386
+        state: "{{ installed }}"
+
+    httpd_service:
+      ensure: "{{ ensure }}"
+      enabled: "{{ enable }}"
+
+  tasks:
+    - name: Install HTTPD package
+      package:
+        name: "{{ item.name }}"
+        state: "{{ item.state }}"
+      with_items: "{{ httpd_package[operatingsystem] }}"
+
+    - name: Configure Apache service
+      service:
+        name: httpd
+        state: "{{ item.ensure }}"
+        enabled: "{{ item.enabled }}"
+      loop:
+        - { ensure: 'running', enabled: True }
+        - { ensure: 'stopped', enabled: False }
+
+    - name: Ensure correct Apache configuration file
+      copy:
+        dest: "/etc/httpd/conf/httpd.conf"
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+        content: "{{ lookup('file', 'puppet:///modules/apache/httpd.conf') }}"
+      when: apacheconf == 'default'
+```

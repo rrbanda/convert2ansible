@@ -1,0 +1,105 @@
+
+ansible-playbook code:
+
+```yaml
+---
+- name: Configure MySQL
+  hosts: all
+  vars:
+    root_password: 'UNSET'
+    old_root_password: ''
+    bind_address: '{{ mysql_params.bind_address }}'
+    port: '{{ mysql_params.port }}'
+    etc_root_password: '{{ mysql_params.etc_root_password }}'
+    service_name: '{{ mysql_params.service_name }}'
+    config_file: '{{ mysql_params.config_file }}'
+    socket: '{{ mysql_params.socket }}'
+    pidfile: '{{ mysql_params.pidfile }}'
+    datadir: '{{ mysql_params.datadir }}'
+    ssl: '{{ mysql_params.ssl }}'
+    ssl_ca: '{{ mysql_params.ssl_ca }}'
+    ssl_cert: '{{ mysql_params.ssl_cert }}'
+    ssl_key: '{{ mysql_params.ssl_key }}'
+    log_error: '{{ mysql_params.log_error }}'
+    default_engine: 'UNSET'
+    root_group: '{{ mysql_params.root_group }}'
+    restart: '{{ mysql_params.restart }}'
+
+  tasks:
+    - name: Ensure root user password file is present
+      file:
+        owner: 'root'
+        group: '{{ root_group }}'
+        mode: '0400'
+        notify:
+          - restart_mysql_service
+
+    - name: Validate SSL parameters
+      debug:
+        msg: "The ssl_ca parameter is required when ssl is true"
+      when: ssl and ssl_ca == ''
+
+    - name: Validate SSL parameters
+      debug:
+        msg: "The ssl_cert parameter is required when ssl is true"
+      when: ssl and ssl_cert == ''
+
+    - name: Validate SSL parameters
+      debug:
+        msg: "The ssl_key parameter is required when ssl is true"
+      when: ssl and ssl_key == ''
+
+    - name: Restart MySQL service
+      service:
+        name: "{{ service_name }}"
+        state: restarted
+        enabled: yes
+      register: result
+      when: restart
+      notify:
+        - restart_mysql_service
+
+    - name: Set MySQL root password
+      command: "mysqladmin -u root {{ old_pw }} password '{{ root_password }}'"
+      when: root_password != 'UNSET'
+      register: set_mysql_rootpw_result
+      until: "mysqladmin -u root -p'{{ root_password }}' status > /dev/null"
+      changed_when: "set_mysql_rootpw_result.rc == 0"
+      notify:
+        - restart_mysql_service
+      vars:
+        old_pw: "{{ '' if old_root_password == '' else '-p\'{{ old_root_password }}\'' }}"
+
+    - name: Create root .my.cnf file
+      template:
+        src: 'my.cnf.pass.erb'
+        dest: '/root/.my.cnf'
+      when: root_password != 'UNSET'
+      register: create_root_my_cnf
+      requires:
+        - set_mysql_rootpw_result
+
+    - name: Create /etc/my.cnf file
+      template:
+        src: 'my.cnf.erb'
+        dest: '{{ config_file }}'
+      when: root_password != 'UNSET'
+      register: create_etc_my_cnf
+      requires:
+        - set_mysql_rootpw_result
+
+    - name: Ensure MySQL directories are present
+      file:
+        path:
+          - '/etc/mysql'
+          - '/etc/mysql/conf.d'
+        state: directory
+        mode: '0755'
+
+    - name: Ensure root user password file is present
+      file:
+        path: '/root/.my.cnf'
+        state: present
+      when: root_password == 'UNSET'
+
+```

@@ -1,0 +1,49 @@
+```yaml
+---
+- name: apt cacher client
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Remove proxy from /etc/apt/apt.conf
+      command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
+      when: "grep Acquire::http::Proxy /etc/apt/apt.conf"
+
+    - name: Find apt caching servers
+      set_fact:
+        servers: []
+      when: node['apt']['cacher_ipaddress'] is undefined and node['apt']['caching_server'] is undefined or Chef_solo
+
+    - name: Populate servers list
+      set_fact:
+        servers: "{{ lookup('awx.node_search', query) }}"
+      vars:
+        query: "apt_caching_server:true AND chef_environment:{{ node.chef_environment }}"
+      when: node['apt']['cacher-client']['restrict_environment'] and 'apt' in node.keys()
+
+    - name: Check if apt caching servers found
+      assert:
+        that:
+          - "servers is defined"
+          - "servers | length > 0"
+        fail_msg: "No apt-cacher-ng server found."
+      when: servers is defined
+
+    - name: Create /etc/apt/apt.conf.d/01proxy template
+      template:
+        src: 01proxy.j2
+        dest: /etc/apt/apt.conf.d/01proxy
+        owner: root
+        group: root
+        mode: '00644'
+      vars:
+        proxy: "{{ servers[0].ipaddress }}"
+        port: "{{ servers[0]['apt']['cacher_port'] }}"
+        proxy_ssl: "{{ servers[0]['apt']['cacher_ssl_support'] }}"
+        bypass: "{{ node['apt']['cache_bypass'] }}"
+      when: "'apt' in node.keys()"
+
+    - name: Update apt cache
+      command: apt-get update
+      when: "'apt' in node.keys()" and "'apt_caching_server:true' in query"
+```

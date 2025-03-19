@@ -1,0 +1,750 @@
+ create a database in mysql using ansible playbook
+
+        [OUTPUT]
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become: yes
+  tasks:
+  - name: Create database
+    mysql_db:
+      name: "{{ name }}"
+      state: present
+    when: name is defined
+```
+
+
+```yml
+---
+- name: Create MySQL Database
+  hosts: all
+  become

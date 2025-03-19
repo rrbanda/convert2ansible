@@ -1,0 +1,16 @@
+ Ansible Playbook equivalent of the Puppet module
+
+        [OUTPUT]
+        - name: Create MySQL database
+          hosts: localhost
+          tasks:
+            - name: Ensure MySQL server is running
+              ansible.builtin.service:
+                name: mysql
+                state: started
+
+            - name: Create MySQL database
+              ansible.builtin.command:
+                creates: /usr/bin/mysql -uroot ${name}
+                command: /usr/bin/mysql -uroot -e "create database ${name}"
+              when: "/usr/bin/mysql -uroot ${name}" not in ansible_cmd_ptp

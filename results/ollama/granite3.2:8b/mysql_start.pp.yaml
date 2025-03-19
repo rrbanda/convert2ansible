@@ -1,0 +1,18 @@
+```yaml
+---
+- hosts: all
+  tasks:
+    - name: Include MySQL server
+      include_role:
+        name: mysql_server
+
+    - name: Create database
+      command: /usr/bin/mysql -uroot -e "create database {{ item.name }}"
+      when: "'/usr/bin/mysql -uroot {{ item.name }}' | /usr/bin/test ! -f"
+      loop:
+        - { name: "{{ mysql_databases[item] }}" }
+      register: create_db_result
+
+    - debug:
+        var: create_db_result
+```

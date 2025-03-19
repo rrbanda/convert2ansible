@@ -1,0 +1,104 @@
+Here is the Ansible Playbook based on the provided Puppet module:
+
+```yaml
+---
+- name: Deploy Rails Webapp
+  hosts: localhost
+  vars:
+    WEBAPP_PATH: "/opt/webapps/rails"
+    service_webapp_repo: "{{ service_webapp_repo }}"
+    service_webapp_tag: "{{ service_webapp_tag }}"
+    db_user: "{{ get_cloudify_attribute('user', 'service', 'redmine_puppet', 'mysql') }}"
+    db_password: "{{ get_cloudify_attribute('password', 'service', 'redmine_puppet', 'mysql') }}"
+    db_name: "{{ get_cloudify_attribute('db_name', 'service', 'redmine_puppet', 'mysql') }}"
+    db_ip: "{{ get_cloudify_attribute('ip', 'service', 'redmine_puppet', 'mysql') }}"
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - rubygems
+          - ruby-dev
+          - libxml2-dev
+          - libxslt-dev
+          - libsqlite3-dev
+          - libmysqlclient-dev
+          - bundler
+
+    - name: Fetch webapp repo
+      git:
+        repo: "{{ service_webapp_repo }}"
+        dest: "{{ WEBAPP_PATH }}"
+
+    - name: Checkout specific tag
+      command: git checkout {{ service_webapp_tag }}
+      args:
+        chdir: "{{ WEBAPP_PATH }}"
+
+    - name: Create Gemfile.local
+      copy:
+        content: "gem 'unicorn'"
+        dest: "{{ WEBAPP_PATH }}/Gemfile.local"
+
+    - name: Install unicorn gem
+      command: bundle install --without development test rmagick postgresql
+      args:
+        chdir: "{{ WEBAPP_PATH }}"
+
+    - name: Generate session store
+      command: bundle exec rake generate_session_store
+      args:
+        chdir: "{{ WEBAPP_PATH }}"
+
+    - name: Create database.yml file
+      template:
+        src: "database.yml.erb"
+        dest: "{{ WEBAPP_PATH }}/config/database.yml"
+
+    - name: Run database migrations and load default data
+      command: bundle exec rake db:migrate RAILS_ENV=production && bundle exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=en
+      args:
+        chdir: "{{ WEBAPP_PATH }}"
+
+    - name: Create rails user and directories
+      user:
+        name: "rails"
+        comment: "rails"
+        groups: "www-data"
+        append: yes
+        home: "{{ WEBAPP_PATH }}"
+        shell: "/bin/sh"
+        require_on: "{{ WEBAPP_PATH }}/files"
+
+    - name: Set permissions for rails directories
+      file:
+        path: "{{ item }}"
+        owner: "rails"
+        group: "www-data"
+        mode: "0755"
+      loop:
+        - "{{ WEBAPP_PATH }}/files"
+        - "{{ WEBAPP_PATH }}/log"
+        - "{{ WEBAPP_PATH }}/tmp"
+        - "{{ WEBAPP_PATH }}/public"
+
+    - name: Create unicorn upstart job
+      copy:
+        content: |
+          description "unicorn app server"
+          command "/usr/sbin/start-stop-daemon --start -c rails -d {{ WEBAPP_PATH }} --exec /usr/local/bin/bundle -- exec unicorn_rails -E production"
+        dest: "/etc/init/unicorn.conf"
+      notify:
+        - Restart Unicorn
+
+    - name: Reload systemd daemon and start Unicorn
+      command: systemctl daemon-reload
+      changed_when: always
+      notify:
+        - Restart Unicorn
+
+    handlers:
+      - name: Restart Unicorn
+        service:
+          name: unicorn
+          state: restarted
+```

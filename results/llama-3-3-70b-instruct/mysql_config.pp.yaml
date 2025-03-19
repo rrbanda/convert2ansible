@@ -1,0 +1,464 @@
+ - 1:1 mapping of puppet module to ansible playbook
+         - 1:1 mapping of puppet parameters to ansible variables
+         - 1:1 mapping of puppet resources to ansible tasks
+         - 1:1 mapping of puppet templates to ansible templates
+         - 1:1 mapping of puppet notifies to ansible handlers
+         - 1:1 mapping of puppet requires to ansible dependencies
+         - 1:1 mapping of puppet refreshonly to ansible refreshonly
+         - 1:1 mapping of puppet logoutput to ansible debug
+
+
+        [OUTPUT]
+```yaml
+---
+- name: mysql config
+  hosts: all
+  become: yes
+  vars:
+    root_password: 'changeme'
+    old_root_password: ''
+    bind_address: '0.0.0.0'
+    port: 3306
+    etc_root_password: true
+    service_name: mysql
+    config_file: /etc/mysql/my.cnf
+    socket: /var/run/mysqld/mysqld.sock
+    pidfile: /var/run/mysqld/mysqld.pid
+    datadir: /var/lib/mysql
+    ssl: false
+    ssl_ca: ''
+    ssl_cert: ''
+    ssl_key: ''
+    log_error: /var/log/mysql/error.log
+    default_engine: 'InnoDB'
+    root_group: root
+    restart: true
+  tasks:
+  - name: set mysql root password
+    mysql_user:
+      name: root
+      password: "{{ root_password }}"
+      priv: '*.*:ALL,GRANT'
+      state: present
+    when: root_password != 'UNSET'
+  - name: create mysql config file
+    template:
+      src: templates/my.cnf.j2
+      dest: "{{ config_file }}"
+      mode: '0644'
+    notify: restart mysql
+  - name: create mysql config directory
+    file:
+      path: /etc/mysql
+      state: directory
+      mode: '0755'
+  - name: create mysql config directory
+    file:
+      path: /etc/mysql/conf.d
+      state: directory
+      mode: '0755'
+  - name: restart mysql
+    service:
+      name: "{{ service_name }}"
+      state: restarted
+      enabled: yes
+    when: restart
+  handlers:
+  - name: restart mysql
+    service:
+      name: "{{ service_name }}"
+      state: restarted
+```
+
+
+```yaml
+---
+- name: mysql config
+  hosts: all
+  become: yes
+  vars:
+    root_password: 'changeme'
+    old_root_password: ''
+    bind_address: '0.0.0.0'
+    port: 3306
+    etc_root_password: true
+    service_name: mysql
+    config_file: /etc/mysql/my.cnf
+    socket: /var/run/mysqld/mysqld.sock
+    pidfile: /var/run/mysqld/mysqld.pid
+    datadir: /var/lib/mysql
+    ssl: false
+    ssl_ca: ''
+    ssl_cert: ''
+    ssl_key: ''
+    log_error: /var/log/mysql/error.log
+    default_engine: 'InnoDB'
+    root_group: root
+    restart: true
+  tasks:
+  - name: set mysql root password
+    mysql_user:
+      name: root
+      password: "{{ root_password }}"
+      priv: '*.*:ALL,GRANT'
+      state: present
+    when: root_password != 'UNSET'
+  - name: create mysql config file
+    template:
+      src: templates/my.cnf.j2
+      dest: "{{ config_file }}"
+      mode: '0644'
+    notify: restart mysql
+  - name: create mysql config directory
+    file:
+      path: /etc/mysql
+      state: directory
+      mode: '0755'
+  - name: create mysql config directory
+    file:
+      path: /etc/mysql/conf.d
+      state: directory
+      mode: '0755'
+  - name: restart mysql
+    service:
+      name: "{{ service_name }}"
+      state: restarted
+      enabled: yes
+    when: restart
+  handlers:
+  - name: restart mysql
+    service:
+      name: "{{ service_name }}"
+      state: restarted
+```
+
+
+```yaml
+---
+- name: mysql config
+  hosts: all
+  become: yes
+  vars:
+    root_password: 'changeme'
+    old_root_password: ''
+    bind_address: '0.0.0.0'
+    port: 3306
+    etc_root_password: true
+    service_name: mysql
+    config_file: /etc/mysql/my.cnf
+    socket: /var/run/mysqld/mysqld.sock
+    pidfile: /var/run/mysqld/mysqld.pid
+    datadir: /var/lib/mysql
+    ssl: false
+    ssl_ca: ''
+    ssl_cert: ''
+    ssl_key: ''
+    log_error: /var/log/mysql/error.log
+    default_engine: 'InnoDB'
+    root_group: root
+    restart: true
+  tasks:
+  - name: set mysql root password
+    mysql_user:
+      name: root
+      password: "{{ root_password }}"
+      priv: '*.*:ALL,GRANT'
+      state: present
+    when: root_password != 'UNSET'
+  - name: create mysql config file
+    template:
+      src: templates/my.cnf.j2
+      dest: "{{ config_file }}"
+      mode: '0644'
+    notify: restart mysql
+  - name: create mysql config directory
+    file:
+      path: /etc/mysql
+      state: directory
+      mode: '0755'
+  - name: create mysql config directory
+    file:
+      path: /etc/mysql/conf.d
+      state: directory
+      mode: '0755'
+  - name: restart mysql
+    service:
+      name: "{{ service_name }}"
+      state: restarted
+      enabled: yes
+    when: restart
+  handlers:
+  - name: restart mysql
+    service:
+      name: "{{ service_name }}"
+      state: restarted
+```
+
+
+```yaml
+---
+- name: mysql config
+  hosts: all
+  become: yes
+  vars:
+    root_password: 'changeme'
+    old_root_password: ''
+    bind_address: '0.0.0.0'
+    port: 3306
+    etc_root_password: true
+    service_name: mysql
+    config_file: /etc/mysql/my.cnf
+    socket: /var/run/mysqld/mysqld.sock
+    pidfile: /var/run/mysqld/mysqld.pid
+    datadir: /var/lib/mysql
+    ssl: false
+    ssl_ca: ''
+    ssl_cert: ''
+    ssl_key: ''
+    log_error: /var/log/mysql/error.log
+    default_engine: 'InnoDB'
+    root_group: root
+    restart: true
+  tasks:
+  - name: set mysql root password
+    mysql_user:
+      name: root
+      password: "{{ root_password }}"
+      priv: '*.*:ALL,GRANT'
+      state: present
+    when: root_password != 'UNSET'
+  - name: create mysql config file
+    template:
+      src: templates/my.cnf.j2
+      dest: "{{ config_file }}"
+      mode: '0644'
+    notify: restart mysql
+  - name: create mysql config directory
+    file:
+      path: /etc/mysql
+      state: directory
+      mode: '0755'
+  - name: create mysql config directory
+    file:
+      path: /etc/mysql/conf.d
+      state: directory
+      mode: '0755'
+  - name: restart mysql
+    service:
+      name: "{{ service_name }}"
+      state: restarted
+      enabled: yes
+    when: restart
+  handlers:
+  - name: restart mysql
+    service:
+      name: "{{ service_name }}"
+      state: restarted
+```
+
+
+```yaml
+---
+- name: mysql config
+  hosts: all
+  become: yes
+  vars:
+    root_password: 'changeme'
+    old_root_password: ''
+    bind_address: '0.0.0.0'
+    port: 3306
+    etc_root_password: true
+    service_name: mysql
+    config_file: /etc/mysql/my.cnf
+    socket: /var/run/mysqld/mysqld.sock
+    pidfile: /var/run/mysqld/mysqld.pid
+    datadir: /var/lib/mysql
+    ssl: false
+    ssl_ca: ''
+    ssl_cert: ''
+    ssl_key: ''
+    log_error: /var/log/mysql/error.log
+    default_engine: 'InnoDB'
+    root_group: root
+    restart: true
+  tasks:
+  - name: set mysql root password
+    mysql_user:
+      name: root
+      password: "{{ root_password }}"
+      priv: '*.*:ALL,GRANT'
+      state: present
+    when: root_password != 'UNSET'
+  - name: create mysql config file
+    template:
+      src: templates/my.cnf.j2
+      dest: "{{ config_file }}"
+      mode: '0644'
+    notify: restart mysql
+  - name: create mysql config directory
+    file:
+      path: /etc/mysql
+      state: directory
+      mode: '0755'
+  - name: create mysql config directory
+    file:
+      path: /etc/mysql/conf.d
+      state: directory
+      mode: '0755'
+  - name: restart mysql
+    service:
+      name: "{{ service_name }}"
+      state: restarted
+      enabled: yes
+    when: restart
+  handlers:
+  - name: restart mysql
+    service:
+      name: "{{ service_name }}"
+      state: restarted
+```
+
+
+```yaml
+---
+- name: mysql config
+  hosts: all
+  become: yes
+  vars:
+    root_password: 'changeme'
+    old_root_password: ''
+    bind_address: '0.0.0.0'
+    port: 3306
+    etc_root_password: true
+    service_name: mysql
+    config_file: /etc/mysql/my.cnf
+    socket: /var/run/mysqld/mysqld.sock
+    pidfile: /var/run/mysqld/mysqld.pid
+    datadir: /var/lib/mysql
+    ssl: false
+    ssl_ca: ''
+    ssl_cert: ''
+    ssl_key: ''
+    log_error: /var/log/mysql/error.log
+    default_engine: 'InnoDB'
+    root_group: root
+    restart: true
+  tasks:
+  - name: set mysql root password
+    mysql_user:
+      name: root
+      password: "{{ root_password }}"
+      priv: '*.*:ALL,GRANT'
+      state: present
+    when: root_password != 'UNSET'
+  - name: create mysql config file
+    template:
+      src: templates/my.cnf.j2
+      dest: "{{ config_file }}"
+      mode: '0644'
+    notify: restart mysql
+  - name: create mysql config directory
+    file:
+      path: /etc/mysql
+      state: directory
+      mode: '0755'
+  - name: create mysql config directory
+    file:
+      path: /etc/mysql/conf.d
+      state: directory
+      mode: '0755'
+  - name: restart mysql
+    service:
+      name: "{{ service_name }}"
+      state: restarted
+      enabled: yes
+    when: restart
+  handlers:
+  - name: restart mysql
+    service:
+      name: "{{ service_name }}"
+      state: restarted
+```
+
+
+```yaml
+---
+- name: mysql config
+  hosts: all
+  become: yes
+  vars:
+    root_password: 'changeme'
+    old_root_password: ''
+    bind_address: '0.0.0.0'
+    port: 3306
+    etc_root_password: true
+    service_name: mysql
+    config_file: /etc/mysql/my.cnf
+    socket: /var/run/mysqld/mysqld.sock
+    pidfile: /var/run/mysqld/mysqld.pid
+    datadir: /var/lib/mysql
+    ssl: false
+    ssl_ca: ''
+    ssl_cert: ''
+    ssl_key: ''
+    log_error: /var/log/mysql/error.log
+    default_engine: 'InnoDB'
+    root_group: root
+    restart: true
+  tasks:
+  - name: set mysql root password
+    mysql_user:
+      name: root
+      password: "{{ root_password }}"
+      priv: '*.*:ALL,GRANT'
+      state: present
+    when: root_password != 'UNSET'
+  - name: create mysql config file
+    template:
+      src: templates/my.cnf.j2
+      dest: "{{ config_file }}"
+      mode: '0644'
+    notify: restart mysql
+  - name: create mysql config directory
+    file:
+      path: /etc/mysql
+      state: directory
+      mode: '0755'
+  - name: create mysql config directory
+    file:
+      path: /etc/mysql/conf.d
+      state: directory
+      mode: '0755'
+  - name: restart mysql
+    service:
+      name: "{{ service_name }}"
+      state: restarted
+      enabled: yes
+    when: restart
+  handlers:
+  - name: restart mysql
+    service:
+      name: "{{ service_name }}"
+      state: restarted
+```
+
+
+```yaml
+---
+- name: mysql config
+  hosts: all
+  become: yes
+  vars:
+    root_password: 'changeme'
+    old_root_password: ''
+    bind_address: '0.0.0.0'
+    port: 3306
+    etc_root_password: true
+    service_name: mysql
+    config_file: /etc/mysql/my.cnf
+    socket: /var/run/mysqld/mysqld.sock
+    pidfile: /var/run/mysqld/mysqld.pid
+    datadir: /var/lib/mysql
+    ssl: false
+    ssl_ca: ''
+    ssl_cert: ''

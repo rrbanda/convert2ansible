@@ -1,0 +1,144 @@
+<think>
+Okay, so I need to convert the provided Puppet module into an Ansible Playbook. Let me start by understanding what each part of the Puppet code does and figure out how to replicate that in Ansible.
+
+First, looking at the input, there's a deployment process for a Rails webapp using attributes from Cloudify. The steps include cloning a git repo, checking out a specific tag, installing dependencies with Bundler, generating a secret, setting up Unicorn and Apache, and some database configuration.
+
+I'll break it down into tasks in Ansible YAML. 
+
+1. **Cloning the Webapp Repo**: The `git clone` command is straightforward. I'll create an Ansible task using the `copy` module to clone the repo into `/opt/webapps/rails`. Also, ensure that `/opt/webapps` exists as a directory.
+
+2. **Checking Out the Tag**: Next, checkout the specific tag using `git checkout`. This should be done in the same directory as the repo was cloned to.
+
+3. **Installing Ruby Dependencies**: The Puppet code installs several Ruby packages and Bundler. In Ansible, I can use the `yum_package` module for system dependencies like rubygems-dev and others. Then, install Bundler using a script task with `gem install`.
+
+4. **Generating the Gemfile.local**: Create this file with the necessary gem specification. Using a template or inline content in the file module makes sense here.
+
+5. **Bundling Install**: Run `bundle install` with specific options to exclude certain parts. This can be done using an `ansible_shell` task since it's a shell command.
+
+6. **Generating Secret**: Use `bundle exec rake generate_session_store` as a shell command within an Ansible task.
+
+7. **Database Configuration**: The database.yml file is generated using a template. I'll use the `template` module with the appropriate path and variables, assuming they're fetched from Cloudify attributes similar to Puppet's `get_cloudify_attribute`.
+
+8. **Running Rails Migrations**: This involves running two rake commands in sequence. Using `ansible_shell` allows me to execute these commands accurately.
+
+9. **Setting Up Unicorn**: Create a service file for Unicorn using a template, set permissions, and enable it via systemd. The service file should include the correct paths and commands needed to run Unicorn.
+
+10. **Apache Configuration**: Disable the default vhost and create a new Apache config file with the virtual host settings, pointing to the Rails app.
+
+I need to ensure that all the directories like `files`, `log`, `tmp`, and `public` are created under `/opt/webapps/rails` and set correctly with ownership and permissions. Also, making sure each task has the correct require statements so dependencies are handled properly.
+
+For variables, since Ansible uses facts, I'll need to collect the necessary attributes from Cloudify similarly, but that might require some additional setup outside of the YAML provided here.
+
+I should also handle any potential errors or retries, perhaps by adding error handling in tasks or setting them to become idempotent where possible. However, for simplicity and based on the original code, I'll proceed without such enhancements unless specified.
+
+Putting it all together, I'll structure each task step-by-step, ensuring dependencies are correctly set with `require` statements and that all necessary files and configurations are created.
+</think>
+
+```yaml
+--- 
+# Deploys a rail webapp as defined in facts loaded from (service-scope) cloudify attributes:
+#   $service_webapp_repo - the git repo to clone
+#   $service_webapp_tag  - the tag to checkout
+
+# Ensure /opt/webapps exists and is a directory
+- name: ensure /opt/webapps directory exists
+  file:
+    path: /opt/webapps
+    state: directory
+    mode: 0755
+
+# Clone webapp repo
+- name: fetch webapp repo
+  copy:
+    src: "{{ service_webapp_repo }}"
+    dest: "{{ WEBAPP_PATH }}"
+    remote: origin
+  register: clone_task
+
+# Checkout specific tag
+- name: fetch webapp tag
+  command: git checkout "{{ service_webapp_tag }}"
+  cwd: "{{ WEBAPP_PATH }}"
+  when: "{{ clone_task.stdout | success }}"
+
+# Install Ruby and Bundler
+- name: install ruby packages
+  yum_package:
+    name: ["rubygems", "ruby-dev", "libxml2-dev", "libxslt-dev", "libsqlite3-dev",
+           "libmysqlclient-dev"]
+  state: present
+
+- name: install bundler
+  command: gem install bundler
+  requires:
+    - package: rubygems
+
+# Create Gemfile.local
+- name: create Gemfile.local
+  file:
+    path: "{{ WEBAPP_PATH }}/Gemfile.local"
+    content: "gem 'unicorn'\n"
+  require:
+    - module: copy task (clone_task)
+
+# Install dependencies using bundler
+- name: bundle install
+  command: bundle install --without development test rmagick postgresql
+  cwd: "{{ WEBAPP_PATH }}"
+  when: "[AnsibleModuleUtil::parse_module_path] is success"
+
+# Generate session store secret
+- name: generate secret
+  command: bundle exec rake generate_session_store
+  cwd: "{{ WEBAPP_PATH }}"
+  when: "[AnsibleModuleUtil::parse_module_path] is success"
+
+# Configure database connection
+- name: create database.yml
+  template:
+    src: database.yml.j2
+    dest: "{{ WEBAPP_PATH }}/config/database.yml"
+  require:
+    - facts: [ansible_version, fact]
+    
+# Run Rails migrations
+- name: run rails migrations
+  command: |
+    bundle exec rake db:migrate
+  when: "[AnsibleModuleUtil::parse_module_path] is success"
+
+# Create unicorn.service file
+- name: create unicorn service file
+  template:
+    src: unicorn.service.j2
+    dest: "{{ WEBAPP_PATH }}/config/unicorn.service"
+  require:
+    - file: (clone_task)
+    
+- name: set up unicorn service permissions
+  shell: |
+    chown -R rails:webapp {{ WEBAPP_PATH }}
+    chmod -R 755 {{ WEBAPP_PATH }}
+  when: "[AnsibleModuleUtil::parse_module_path] is success"
+
+- name: start unicorn service
+  systemd:
+    file: "{{ WEBAPP_PATH }}/config/unicorn.service"
+    state: started
+
+# Configure Apache virtual host
+- name: create apache config file
+  template:
+    src: httpd-vhost.conf.j2
+    dest: "/etc/apache2/sites-available/rails-site.conf"
+  require:
+    - package: apache2
+
+- name: enable apache site
+  shell: a2ensite rails-site
+  when: "[AnsibleModuleUtil::parse_module_path] is success"
+
+- name: reload apache
+  shell: systemctl reload apache2
+  when: "[AnsibleModuleUtil::parse_module_path] is success"
+```

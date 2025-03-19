@@ -1,0 +1,393 @@
+
+
+
+        [OUTPUT]
+```yml
+---
+- name: Configure apt-cacher-ng client
+  hosts: all
+  become: yes
+  tasks:
+  - name: Remove proxy from /etc/apt/apt.conf
+    command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
+    when: grep -q Acquire::http::Proxy /etc/apt/apt.conf
+
+  - name: Get cacher server IP
+    set_fact:
+      cacher_ipaddress: "{{ node['apt']['cacher_ipaddress'] | default(node['apt']['caching_server']) }}"
+
+  - name: Get cacher server port
+    set_fact:
+      cacher_port: "{{ node['apt']['cacher_port'] | default(3142) }}"
+
+  - name: Get cacher server interface
+    set_fact:
+      cacher_interface: "{{ node['apt']['cacher_interface'] | default('') }}"
+
+  - name: Get cacher server SSL support
+    set_fact:
+      cacher_ssl_support: "{{ node['apt']['cacher_ssl_support'] | default(false) }}"
+
+  - name: Get cacher server bypass
+    set_fact:
+      cache_bypass: "{{ node['apt']['cache_bypass'] | default('') }}"
+
+  - name: Create 01proxy template
+    template:
+      src: templates/01proxy.j2
+      dest: /etc/apt/apt.conf.d/01proxy
+      mode: '0644'
+      owner: root
+      group: root
+    notify: apt-get update
+    when: cacher_ipaddress is defined
+
+  - name: Delete 01proxy file if no cacher server
+    file:
+      path: /etc/apt/apt.conf.d/01proxy
+      state: absent
+    when: cacher_ipaddress is not defined
+
+  - name: Run apt-get update
+    apt:
+      update_cache: yes
+    when: cacher_ipaddress is defined
+
+  - name: Include apt default recipe
+    include_tasks: apt-default.yml
+```
+
+
+```yml
+---
+- name: Configure apt-cacher-ng client
+  hosts: all
+  become: yes
+  tasks:
+  - name: Remove proxy from /etc/apt/apt.conf
+    command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
+    when: grep -q Acquire::http::Proxy /etc/apt/apt.conf
+
+  - name: Get cacher server IP
+    set_fact:
+      cacher_ipaddress: "{{ node['apt']['cacher_ipaddress'] | default(node['apt']['caching_server']) }}"
+
+  - name: Get cacher server port
+    set_fact:
+      cacher_port: "{{ node['apt']['cacher_port'] | default(3142) }}"
+
+  - name: Get cacher server interface
+    set_fact:
+      cacher_interface: "{{ node['apt']['cacher_interface'] | default('') }}"
+
+  - name: Get cacher server SSL support
+    set_fact:
+      cacher_ssl_support: "{{ node['apt']['cacher_ssl_support'] | default(false) }}"
+
+  - name: Get cacher server bypass
+    set_fact:
+      cache_bypass: "{{ node['apt']['cache_bypass'] | default('') }}"
+
+  - name: Create 01proxy template
+    template:
+      src: templates/01proxy.j2
+      dest: /etc/apt/apt.conf.d/01proxy
+      mode: '0644'
+      owner: root
+      group: root
+    notify: apt-get update
+    when: cacher_ipaddress is defined
+
+  - name: Delete 01proxy file if no cacher server
+    file:
+      path: /etc/apt/apt.conf.d/01proxy
+      state: absent
+    when: cacher_ipaddress is not defined
+
+  - name: Run apt-get update
+    apt:
+      update_cache: yes
+    when: cacher_ipaddress is defined
+
+  - name: Include apt default recipe
+    include_tasks: apt-default.yml
+```
+
+
+```yml
+---
+- name: Configure apt-cacher-ng client
+  hosts: all
+  become: yes
+  tasks:
+  - name: Remove proxy from /etc/apt/apt.conf
+    command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
+    when: grep -q Acquire::http::Proxy /etc/apt/apt.conf
+
+  - name: Get cacher server IP
+    set_fact:
+      cacher_ipaddress: "{{ node['apt']['cacher_ipaddress'] | default(node['apt']['caching_server']) }}"
+
+  - name: Get cacher server port
+    set_fact:
+      cacher_port: "{{ node['apt']['cacher_port'] | default(3142) }}"
+
+  - name: Get cacher server interface
+    set_fact:
+      cacher_interface: "{{ node['apt']['cacher_interface'] | default('') }}"
+
+  - name: Get cacher server SSL support
+    set_fact:
+      cacher_ssl_support: "{{ node['apt']['cacher_ssl_support'] | default(false) }}"
+
+  - name: Get cacher server bypass
+    set_fact:
+      cache_bypass: "{{ node['apt']['cache_bypass'] | default('') }}"
+
+  - name: Create 01proxy template
+    template:
+      src: templates/01proxy.j2
+      dest: /etc/apt/apt.conf.d/01proxy
+      mode: '0644'
+      owner: root
+      group: root
+    notify: apt-get update
+    when: cacher_ipaddress is defined
+
+  - name: Delete 01proxy file if no cacher server
+    file:
+      path: /etc/apt/apt.conf.d/01proxy
+      state: absent
+    when: cacher_ipaddress is not defined
+
+  - name: Run apt-get update
+    apt:
+      update_cache: yes
+    when: cacher_ipaddress is defined
+
+  - name: Include apt default recipe
+    include_tasks: apt-default.yml
+```
+
+
+```yml
+---
+- name: Configure apt-cacher-ng client
+  hosts: all
+  become: yes
+  tasks:
+  - name: Remove proxy from /etc/apt/apt.conf
+    command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
+    when: grep -q Acquire::http::Proxy /etc/apt/apt.conf
+
+  - name: Get cacher server IP
+    set_fact:
+      cacher_ipaddress: "{{ node['apt']['cacher_ipaddress'] | default(node['apt']['caching_server']) }}"
+
+  - name: Get cacher server port
+    set_fact:
+      cacher_port: "{{ node['apt']['cacher_port'] | default(3142) }}"
+
+  - name: Get cacher server interface
+    set_fact:
+      cacher_interface: "{{ node['apt']['cacher_interface'] | default('') }}"
+
+  - name: Get cacher server SSL support
+    set_fact:
+      cacher_ssl_support: "{{ node['apt']['cacher_ssl_support'] | default(false) }}"
+
+  - name: Get cacher server bypass
+    set_fact:
+      cache_bypass: "{{ node['apt']['cache_bypass'] | default('') }}"
+
+  - name: Create 01proxy template
+    template:
+      src: templates/01proxy.j2
+      dest: /etc/apt/apt.conf.d/01proxy
+      mode: '0644'
+      owner: root
+      group: root
+    notify: apt-get update
+    when: cacher_ipaddress is defined
+
+  - name: Delete 01proxy file if no cacher server
+    file:
+      path: /etc/apt/apt.conf.d/01proxy
+      state: absent
+    when: cacher_ipaddress is not defined
+
+  - name: Run apt-get update
+    apt:
+      update_cache: yes
+    when: cacher_ipaddress is defined
+
+  - name: Include apt default recipe
+    include_tasks: apt-default.yml
+```
+
+
+```yml
+---
+- name: Configure apt-cacher-ng client
+  hosts: all
+  become: yes
+  tasks:
+  - name: Remove proxy from /etc/apt/apt.conf
+    command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
+    when: grep -q Acquire::http::Proxy /etc/apt/apt.conf
+
+  - name: Get cacher server IP
+    set_fact:
+      cacher_ipaddress: "{{ node['apt']['cacher_ipaddress'] | default(node['apt']['caching_server']) }}"
+
+  - name: Get cacher server port
+    set_fact:
+      cacher_port: "{{ node['apt']['cacher_port'] | default(3142) }}"
+
+  - name: Get cacher server interface
+    set_fact:
+      cacher_interface: "{{ node['apt']['cacher_interface'] | default('') }}"
+
+  - name: Get cacher server SSL support
+    set_fact:
+      cacher_ssl_support: "{{ node['apt']['cacher_ssl_support'] | default(false) }}"
+
+  - name: Get cacher server bypass
+    set_fact:
+      cache_bypass: "{{ node['apt']['cache_bypass'] | default('') }}"
+
+  - name: Create 01proxy template
+    template:
+      src: templates/01proxy.j2
+      dest: /etc/apt/apt.conf.d/01proxy
+      mode: '0644'
+      owner: root
+      group: root
+    notify: apt-get update
+    when: cacher_ipaddress is defined
+
+  - name: Delete 01proxy file if no cacher server
+    file:
+      path: /etc/apt/apt.conf.d/01proxy
+      state: absent
+    when: cacher_ipaddress is not defined
+
+  - name: Run apt-get update
+    apt:
+      update_cache: yes
+    when: cacher_ipaddress is defined
+
+  - name: Include apt default recipe
+    include_tasks: apt-default.yml
+```
+
+
+```yml
+---
+- name: Configure apt-cacher-ng client
+  hosts: all
+  become: yes
+  tasks:
+  - name: Remove proxy from /etc/apt/apt.conf
+    command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
+    when: grep -q Acquire::http::Proxy /etc/apt/apt.conf
+
+  - name: Get cacher server IP
+    set_fact:
+      cacher_ipaddress: "{{ node['apt']['cacher_ipaddress'] | default(node['apt']['caching_server']) }}"
+
+  - name: Get cacher server port
+    set_fact:
+      cacher_port: "{{ node['apt']['cacher_port'] | default(3142) }}"
+
+  - name: Get cacher server interface
+    set_fact:
+      cacher_interface: "{{ node['apt']['cacher_interface'] | default('') }}"
+
+  - name: Get cacher server SSL support
+    set_fact:
+      cacher_ssl_support: "{{ node['apt']['cacher_ssl_support'] | default(false) }}"
+
+  - name: Get cacher server bypass
+    set_fact:
+      cache_bypass: "{{ node['apt']['cache_bypass'] | default('') }}"
+
+  - name: Create 01proxy template
+    template:
+      src: templates/01proxy.j2
+      dest: /etc/apt/apt.conf.d/01proxy
+      mode: '0644'
+      owner: root
+      group: root
+    notify: apt-get update
+    when: cacher_ipaddress is defined
+
+  - name: Delete 01proxy file if no cacher server
+    file:
+      path: /etc/apt/apt.conf.d/01proxy
+      state: absent
+    when: cacher_ipaddress is not defined
+
+  - name: Run apt-get update
+    apt:
+      update_cache: yes
+    when: cacher_ipaddress is defined
+
+  - name: Include apt default recipe
+    include_tasks: apt-default.yml
+```
+
+
+```yml
+---
+- name: Configure apt-cacher-ng client
+  hosts: all
+  become: yes
+  tasks:
+  - name: Remove proxy from /etc/apt/apt.conf
+    command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
+    when: grep -q Acquire::http::Proxy /etc/apt/apt.conf
+
+  - name: Get cacher server IP
+    set_fact:
+      cacher_ipaddress: "{{ node['apt']['cacher_ipaddress'] | default(node['apt']['caching_server']) }}"
+
+  - name: Get cacher server port
+    set_fact:
+      cacher_port: "{{ node['apt']['cacher_port'] | default(3142) }}"
+
+  - name: Get cacher server interface
+    set_fact:
+      cacher_interface: "{{ node['apt']['cacher_interface'] | default('') }}"
+
+  - name: Get cacher server SSL support
+    set_fact:
+      cacher_ssl_support: "{{ node['apt']['cacher_ssl_support'] | default(false) }}"
+
+  - name: Get cacher server bypass
+    set_fact:
+      cache_bypass: "{{ node['apt']['cache_bypass'] | default('') }}"
+
+  - name: Create 01proxy template
+    template:
+      src: templates/01proxy.j2
+      dest: /etc/apt/apt.conf.d/01proxy
+      mode: '0644'
+      owner: root
+      group: root
+    notify: apt-get update
+    when: cacher_ipaddress is defined
+
+  - name: Delete 01proxy file if no cacher server
+    file:
+      path: /etc/apt/apt.conf.d/01proxy
+      state: absent
+    when: cacher_ipaddress is not defined
+
+  - name: Run apt-get update
+    apt:
+      update_cache: yes
+    when: cacher_ipaddress is defined
+
+  - name: Include apt default recipe
+    include
