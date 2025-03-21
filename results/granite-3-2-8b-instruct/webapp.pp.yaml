@@ -2,133 +2,140 @@ Here is my response:
 
 ```yaml
 ---
-- name: Deploy Rails webapp
+- name: Deploy Rails Webapp
   hosts: all
+  become: yes
+
   vars:
-    WEBAPP_PATH: /opt/webapps/rails
+    WEBAPP_PATH: "/opt/webapps/rails"
     service_webapp_repo: "{{ lookup('env', 'service_webapp_repo') }}"
     service_webapp_tag: "{{ lookup('env', 'service_webapp_tag') }}"
-    db_user: "{{ lookup('env', 'db_user') }}"
-    db_password: "{{ lookup('env', 'db_password') }}"
+    db_user: "{{ lookup('env', 'user') }}"
+    db_password: "{{ lookup('env', 'password') }}"
     db_name: "{{ lookup('env', 'db_name') }}"
-    db_ip: "{{ lookup('env', 'db_ip') }}"
+    db_ip: "{{ lookup('env', 'ip') }}"
 
   tasks:
-    - name: Notify beginning deploy
+    - name: Begin deploy of {{ service_webapp_repo }} version {{ service_webapp_tag }} into {{ WEBAPP_PATH }}
       debug:
         msg: "Beginning deploy of {{ service_webapp_repo }} version {{ service_webapp_tag }} into {{ WEBAPP_PATH }}"
 
-    - name: Ensure packages are installed
-      apt:
-        name: "{{ item }}"
+    - name: Install required packages
+      package:
+        name:
+          - rubygems
+          - ruby-dev
+          - libxml2-dev
+          - libxslt-dev
+          - libsqlite3-dev
+          - libmysqlclient-dev
         state: present
-      with_items:
-        - ruby-dev
-        - libxml2-dev
-        - libxslt-dev
-        - libsqlite3-dev
-        - libmysqlclient-dev
-        - bundler
 
-    - name: Create webapps directory
+    - name: Install bundler
+      package:
+        name: bundler
+        state: present
+      when: "'bundler' not in ansible_facts['packages']"
+      tags: [bundler]
+
+    - name: Ensure Apache is installed
+      apt:
+        name: apache2
+        state: present
+
+    - name: Ensure Apache Proxy HTTP Module is installed
+      apache2_module:
+        name: proxy_http
+        state: present
+
+    - name: Create /opt/webapps directory
       file:
         path: "{{ WEBAPP_PATH }}"
         state: directory
         mode: '0755'
+        owner: root
+        group: root
 
-    - name: Fetch webapp repo
+    - name: Clone webapp repository
       git:
         repo: "{{ service_webapp_repo }}"
         dest: "{{ WEBAPP_PATH }}"
+        update: yes
 
-    - name: Checkout webapp tag
+    - name: Checkout specified tag
       git:
         repo: "{{ service_webapp_repo }}"
         dest: "{{ WEBAPP_PATH }}"
-        version: "{{ service_webapp_tag }}"
+        tag: "{{ service_webapp_tag }}"
+        update: yes
 
-    - name: Add unicorn to Gemfile
+    - name: Add Unicorn to Gemfile
       copy:
-        content: |-
-          gem 'unicorn'
-        dest: "{{ WEBAPP_PATH}}/Gemfile.local"
+        dest: "{{ WEBAPP_PATH }}/Gemfile.local"
+        content: "gem 'unicorn'\n"
         owner: root
         group: root
         mode: '0644'
-        require:
-          - apt.cmd
-          - git
+      notifications:
+        - type: messaging
+          strategy: ido
+          template: "Unicorn added to Gemfile.local"
 
-    - name: Bundle install
+    - name: Install Gem dependencies
       command: bundle install --without development test rmagick postgresql
       args:
         chdir: "{{ WEBAPP_PATH }}"
-        creates: "{{ WEBAPP_PATH }}/config/database.yml"
       environment:
-        PATH: /usr/bin:/usr/local/bin:/bin
+        PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin:/bin"
       becomes: yes
-      registers: bundle_install_out
+      become_user: "{{ WEBAPP_PATH|split('/').last }}"
+      when: "'bundler' in ansible_facts['packages']"
 
-    - name: Generate secret
+    - name: Generate secret token
       command: bundle exec rake generate_session_store
       args:
         chdir: "{{ WEBAPP_PATH }}"
       environment:
-        PATH: /usr/bin:/usr/local/bin:/bin
+        PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin:/bin"
       becomes: yes
-      when: bundle_install_out|success
+      become_user: "{{ WEBAPP_PATH|split('/').last }}"
 
     - name: Configure database.yml
-      template:
-        src: database.yml.erb
+      copy:
         dest: "{{ WEBAPP_PATH }}/config/database.yml"
-      when: bundle_install_out|success
+        content: "{{ lookup('template', 'webapp/database.yml.erb') }}"
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart Unicorn
+      when: "'database.yml' not in ansible_facts.files"
 
-    - name: Rake database tasks
+    - name: Run database migrations and load default data
       command: bundle exec rake db:migrate RAILS_ENV=production && bundle exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=en
       args:
         chdir: "{{ WEBAPP_PATH }}"
       environment:
-        PATH: /usr/bin:/usr/local/bin:/bin
+        PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin:/bin"
       becomes: yes
-      when: bundle_install_out|success
+      become_user: "{{ WEBAPP_PATH|split('/').last }}"
 
-    - name: Create rails user
+    - name: Create Rails user
       user:
         name: rails
         shell: /bin/sh
         home: "{{ WEBAPP_PATH }}"
-      when: bundle_install_out|success
+        comment: rails
+        createhome: yes
+        system: yes
+        generate_ssh_keys: no
+        groups: root
+        append: yes
+        sudo: NO
 
-    - name: Set permissions for webapp files
+    - name: Set ownership of webapp directories
       file:
-        path: "{{ item }}"
-        owner: rails
-        mode: '0755'
-      with_items:
-        - "{{ WEBAPP_PATH }}/files"
-        - "{{ WEBAPP_PATH }}/log"
-        - "{{ WEBAPP_PATH }}/tmp"
-        - "{{ WEBAPP_PATH }}/public"
-      when: bundle_install_out|success
-
-    - name: Configure Unicorn service
-      upstart_job:
-        name: unicorn
-        command: start-stop-daemon --start -c rails -d {{ WEBAPP_PATH }} --exec /usr/local/bin/bundle -- exec unicorn_rails -E production
-        start_secs: 10
-        process_name: unicorn
-        user: rails
-        start_on_boot: yes
-      when: bundle_install_out|success
-
-    - name: Disable default Apache site
-      command: /usr/sbin/a2dissite default
-      when: bundle_install_out|success
-
-    - name: Add Rails vhost configuration
-      template:
-        src: webapp.erb
-        dest: /etc/apache2/sites-available/webapp.conf
-      when: bundle_install_out|success
-```
+        path:
+          - "{{ WEBAPP_PATH }}/files"
+          - "{{ WEBAPP_PATH }}/log"
+          - "{{ WEBAPP_PATH }}/tmp"
+          - "{{

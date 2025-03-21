@@ -1,32 +1,22 @@
-Here is my response:
-
-```yaml
 ---
-- hosts: mysql_servers
-  become: yes
-  vars:
-    mysql_root_password: "your_root_password"
+- hosts: all
+  become: true
+  roles:
+    - role: mysql
+
   tasks:
-    - name: Ensure MySQL Server is installed
-      apt:
-        name: mysql-server
+    - name: Create MySQL database
+      mysql_db:
+        name: "{{ item.name }}"
         state: present
-
-    - name: Start and enable MySQL Server
-      service:
-        name: mysql
-        state: started
-        enabled: yes
-
-    - name: Create MySQL Database
-      become_user: root
-      ansible.builtin.command: "mysql -uroot -p{{ mysql_root_password }} -e 'create database {{ item }}'"
       loop:
-        - "{{ mysql_db_name }}"
-      register: db_creation
-      until: db_creation.rpc_retcode == 0
-      retries: 5
-      delay: 5
-```
+        - { name: "{{ mysql_database_name }}" }
+      when: mysql_database_name is defined
 
-Note: Replace `mysql_servers` with your actual target hosts and `your_root_password` with the appropriate MySQL root password. Also, ensure `mysql_db_name` is defined elsewhere in your playbook or passed as a variable.
+    - name: Create database via command (legacy)
+      command: /usr/bin/mysql -uroot -e "create database {{ mysql_database_name }}"
+      become: true
+      become_user: root
+      when: mysql_database_name is defined
+      register: result
+      changed_when: result.rc != 0

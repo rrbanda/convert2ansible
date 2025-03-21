@@ -1,37 +1,36 @@
-Here is my response:
-
-```yaml
 ---
-- name: Ensure Apache is installed and running
+- name: Ensure Apache is configured
   hosts: all
   become: yes
-  vars:
-    apache_conf_default: "puppet:///modules/apache/httpd.conf"
-
   tasks:
-    - name: Check if Apache should be enabled
-      set_fact:
-        apache_enabled: "{{ 'false' in apache or 'disabled' in apache }}"
-
-    - name: Install Apache package
+    - name: Install httpd package
       package:
         name: httpd
-        state: "{{ 'present' if not apache_enabled else absent }}"
-      when: ansible_os_family == 'RedHat'
+        state: present
+      when: ansible_architecture == 'x86_64'
 
-    - name: Stop and disable Apache service
+    - name: Install httpd package for i386
+      package:
+        name: httpd-i386
+        state: present
+      when: ansible_architecture == 'i686'
+
+    - name: Check if Apache should be enabled
+      set_fact:
+        should_enable: "{{ ('false' != apache_disable) | ternary(true, false) }}"
+
+    - name: Start Apache service
       service:
         name: httpd
-        enabled: "{{ not apache_enabled }}"
-        state: stopped
-      when: ansible_os_family == 'RedHat' and apache_enabled
+        state: "{{ ('running' if should_enable else 'stopped') | lowercase }}"
+        enabled: "{{ should_enable }}"
+      when: ansible_architecture == 'x86_64'
 
-    - name: Ensure Apache configuration file
-      copy:
+    - name: Ensure Apache configuration file exists
+      template:
+        src: httpd.conf.j2
         dest: /etc/httpd/conf/httpd.conf
         owner: root
         group: root
-        mode: '0644'
-        content: "{{ lookup('file', apache_conf_default) }}"
-      when: ansible_os_family == 'RedHat'
-```
+        mode: 0644
+      when: ansible_architecture == 'x86_64'

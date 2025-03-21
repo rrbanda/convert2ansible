@@ -1,102 +1,73 @@
-Here is my response:
-
-```yaml
 ---
-- name: MySQL Configuration
-  hosts: ubuntu_servers
+- name: Configure MySQL
+  hosts: mysql_servers
   become: yes
   vars:
     root_password: 'changeme'
-    bind_address: '0.0.0.0'
+    old_root_password: ''
+    bind_address: 0.0.0.0
     port: 3306
     ssl: false
-    ssl_ca: ''
-    ssl_cert: ''
-    ssl_key: ''
-    log_error: '/var/log/mysql/error.log'
+    ssl_ca: /etc/ssl/certs/ssl-ca.crt
+    ssl_cert: /etc/ssl/certs/ssl-cert.crt
+    ssl_key: /etc/ssl/private/ssl-key.key
+    log_error: /var/log/mysql/error.log
     datadir: /var/lib/mysql
     service_name: mysql
     config_file: /etc/mysql/my.cnf
-    etc_root_password: true
     default_engine: innodb
-    root_group: 'mysql'
-    restart: true
+    root_group: mysql
 
   tasks:
     - name: Ensure directories exist
       file:
-        path: "/etc/mysql/{{ item }}"
+        path: "{{ item }}"
         state: directory
         mode: '0755'
       loop:
-        - conf.d
-        - my.cnf
+        - /etc/mysql
+        - /etc/mysql/conf.d
+        - "{{ config_file|dirname }}"
 
-    - name: Manage MySQL root password
-      block:
-        - name: Set new MySQL root password
-          command: >
-            mysqladmin -u root {{ old_root_password | default("") }} password '{{ root_password }}'
-          register: set_mysql_rootpw
-          changed_when: 'set_mysql_rootpw.rc != 0'
-          notify: Restart MySQL
-
-        - name: Create .my.cnf for root user
-          copy:
-            content: |
-              [[client]]
-              user=root
-              password={{ root_password }}
-              host=localhost
-              tcp-port={{ port }}
-              socket=/var/run/mysqld/mysqld.sock
-            dest: /root/.my.cnf
-            owner: root
-            group: root
-            mode: '0400'
-          when: root_password != 'UNSET'
-
-        - name: Ensure /etc/my.cnf has root password
-          copy:
-            content: |
-              [[client]]
-              user=root
-              password={{ root_password }}
-              host=localhost
-              tcp-port={{ port }}
-              socket=/var/run/mysqld/mysqld.sock
-            dest: /etc/my.cnf
-            owner: root
-            group: root
-            mode: '0644'
-          when: etc_root_password | bool
-          notify: Restart MySQL
+    - name: Configure root password
+      command: "mysqladmin -u root {{ ('-p' + old_root_password) if old_root_password else '' }} password '{{ root_password }}'"
+      become: yes
       become_user: root
-      when: root_password != 'UNSET'
+      register: set_mysql_rootpw
+      changed_when: "'Access denied for user' not in set_mysql_rootpw.stdout"
+      failed_when: "'Access denied for user' in set_mysql_rootpw.stdout"
+      notify:
+        - Restart MySQL Service
 
-    - name: Configure MySQL service parameters
-      template:
-        src: my.cnf.erb
+    - name: Create .my.cnf
+      copy:
+        content: "{{ lookup('template', 'mysql/my.cnf.pass.erb') }}"
+        dest: /root/.my.cnf
+        owner: root
+        group: mysql
+        mode: '0400'
+      when: root_password != 'UNSET'
+      notify:
+        - Restart MySQL Service
+
+    - name: Persist .my.cnf
+      file:
+        path: /root/.my.cnf
+        state: present
+      when: root_password == 'UNSET'
+
+    - name: Create my.cnf
+      copy:
+        content: "{{ lookup('template', 'mysql/my.cnf.erb') }}"
         dest: "{{ config_file }}"
         owner: root
-        group: root
+        group: mysql
         mode: '0644'
-      notify: Restart MySQL
+      notify:
+        - Restart MySQL Service
 
-    - name: Ensure /etc/mysql exists
-      file:
-        path: /etc/mysql
-        state: directory
-        mode: '0755'
-
-    - name: Restart MySQL service if requested
+    - name: Restart MySQL service
       service:
         name: "{{ service_name }}"
         state: restarted
-      when: restart
-      become: yes
-      become_user: root
-      tags: [restart_mysql]
-```
-
-Please note that the above Ansible playbook is a direct translation of the provided Puppet module, assuming some default values and logic. It might need adjustments based on specific environment requirements. Specifically, the `my.cnf.erb` and `my.cnf.pass.erb` templates are not provided here, but would need to be created to handle variable substitutions.
+      when: restart | bool

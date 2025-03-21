@@ -1,53 +1,47 @@
-Here is my response:
-
-```yaml
----
-- name: Configure apt cacher client
+- name: Configure apt cacher-client
   hosts: all
   become: yes
   vars:
-    proxy: "{{ lookup('env', 'APT_CACHER_IP') }}"
-    port: 3142
-    proxy_ssl: false
-    bypass: []
+    proxy: "{{ lookup('env', 'APT_CACHER_IPADDRESS') }}"
+    port: "{{ lookup('env', 'APT_CACHER_PORT') }}"
+    bypass: "{{ lookup('env', 'APT_CACHE_BYPASS') }}"
+    proxy_ssl: "{{ lookup('env', 'APT_CACHER_SSL_SUPPORT') }}"
   tasks:
-    - name: Remove Acquire::http::Proxy from apt.conf
+    - name: Remove proxy lines from /etc/apt/apt.conf
       block:
-        - name: Check for proxy settings in apt.conf
-          command: grep Acquire::http::Proxy /etc/apt/apt.conf
-          register: apt_proxy_check
-          changed_when: false
-        - name: Remove proxy settings if found
+        - name: Check if lines exist
+          shell: grep -q '^Acquire::http::Proxy' /etc/apt/apt.conf
+          register: proxy_lines
+
+        - name: Remove proxy lines
           command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
-          when: apt_proxy_check.stdout
+          when: proxy_lines.rc == 0
 
     - name: Configure apt proxy
-      block:
-        - name: Retrieve cacher server info
-          set_fact:
-            cacher_ipaddress: "{{ proxy }}"
-            cacher_port: "{{ port }}"
-        - name: Create apt proxy configuration file
-          template:
-            src: 01proxy.j2
-            dest: /etc/apt/apt.conf.d/01proxy
-            owner: root
-            group: root
-            mode: '00644'
-          notify:
-            - Run apt-get update
-      when: cacher_ipaddress
+      template:
+        src: 01proxy.j2
+        dest: /etc/apt/apt.conf.d/01proxy
+        owner: root
+        group: root
+        mode: '00644'
+      vars:
+        config:
+          proxy: "{{ proxy }}"
+          port: "{{ port }}"
+          proxy_ssl: "{{ proxy_ssl }}"
+          bypass: "{{ bypass }}"
+      notify:
+        - Run apt-get update
+      when: proxy is defined
 
-    - name: Ensure apt-cacher-ng server found
-      debug:
-        msg: "apt-cacher-ng server found on {{ cacher_ipaddress }}. Port is {{ cacher_port }}"
-      when: cacher_ipaddress
-
-    - name: Remove apt proxy config if no server found
+    - name: Delete proxy configuration file
       file:
         path: /etc/apt/apt.conf.d/01proxy
         state: absent
-      when: not cacher_ipaddress
-```
+      when: proxy is undefined
 
-Note: The Ansible code assumes that the variables `lookup('env', 'APT_CACHER_IP')` and `port` are set elsewhere in the playbook or in the environment. The `01proxy.j2` template should be provided separately. The tasks are organized to mimic the logic of the Chef recipe.
+    - name: Include apt defaults
+      include_role:
+        name: apt.default
+
+...

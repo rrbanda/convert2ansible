@@ -1,8 +1,9 @@
 from fileio.settings import Settings
 from fileio.file_handler import FileHandler
-import os
 from ai_modules.ollama_explanator import Ollama
 from ai_modules.wxai import WxAI
+import os
+import re
 
 # app settings
 settings = Settings()
@@ -38,6 +39,12 @@ for file in files:
         
         if file.endswith(".yml") or file.endswith(".rb"):
             playbook = ai.transform(content, "Chef Recipe")
+
+        pattern = r"```yaml\n(.*?)\n```"
+        match = re.search(pattern, playbook, re.DOTALL)
+
+        if match: 
+            playbook = match.group(1) 
 
         # write the results to output directory and move onto the next directory
         os.makedirs(summary_location, exist_ok=True)
