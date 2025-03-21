@@ -1,131 +1,22 @@
-
-
-
-        [OUTPUT]
-```
 ```yml
 ---
-- name: Deploy Rails Webapp
+- name: Create MySQL DB
   hosts: all
   become: yes
-  vars:
-    webapp_path: /opt/webapps/rails
-    service_webapp_repo: "{{ lookup('env', 'service_webapp_repo') }}"
-    service_webapp_tag: "{{ lookup('env', 'service_webapp_tag') }}"
-    db_user: "{{ lookup('env', 'db_user') }}"
-    db_password: "{{ lookup('env', 'db_password') }}"
-    db_name: "{{ lookup('env', 'db_name') }}"
-    db_ip: "{{ lookup('env', 'db_ip') }}"
-
   tasks:
-  - name: Install dependencies
-    apt:
-      name: ["rubygems", "ruby-dev", "libxml2-dev", "libxslt-dev", "libsqlite3-dev", "libmysqlclient-dev"]
+  - name: Include MySQL server setup
+    include: mysql_server.yml
+
+  - name: Create MySQL database
+    mysql_db:
+      name: "{{ name }}"
       state: present
+    when: mysql_db_name is not defined
+    register: mysql_db_name
 
-  - name: Install bundler
-    gem:
-      name: bundler
-      state: present
-
-  - name: Enable apache module
-    apache2_module:
-      name: proxy_http
-      state: present
-
-  - name: Create webapp directory
-    file:
-      path: /opt/webapps
-      state: directory
-
-  - name: Clone webapp repo
-    git:
-      repo: "{{ service_webapp_repo }}"
-      dest: "{{ webapp_path }}"
-      version: "{{ service_webapp_tag }}"
-
-  - name: Install unicorn
-    file:
-      path: "{{ webapp_path }}/Gemfile.local"
-      state: touch
-      content: "gem 'unicorn'\n"
-
-  - name: Run bundle install
-    command: bundle install --without development test rmagick postgresql
-    args:
-      chdir: "{{ webapp_path }}"
-
-  - name: Generate secret
-    command: bundle exec rake generate_session_store
-    args:
-      chdir: "{{ webapp_path }}"
-
-  - name: Configure database
-    template:
-      src: database.yml.erb
-      dest: "{{ webapp_path }}/config/database.yml"
-      mode: '0644'
-    vars:
-      db_user: "{{ db_user }}"
-      db_password: "{{ db_password }}"
-      db_name: "{{ db_name }}"
-      db_ip: "{{ db_ip }}"
-
-  - name: Run rake tasks
-    command: bundle exec rake db:migrate RAILS_ENV=production && bundle exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=en
-    args:
-      chdir: "{{ webapp_path }}"
-
-  - name: Create rails user
-    user:
-      name: rails
-      state: present
-      comment: rails
-      group: rails
-      home: "{{ webapp_path }}"
-
-  - name: Set permissions
-    file:
-      path: "{{ item }}"
-      owner: rails
-      group: rails
-      mode: '0755'
-    with_items:
-      - "{{ webapp_path }}/files"
-      - "{{ webapp_path }}/log"
-      - "{{ webapp_path }}/tmp"
-      - "{{ webapp_path }}/public"
-
-  - name: Configure unicorn
-    template:
-      src: unicorn.conf.erb
-      dest: /etc/init/unicorn.conf
-      mode: '0644'
-    vars:
-      webapp_path: "{{ webapp_path }}"
-
-  - name: Start unicorn
-    service:
-      name: unicorn
-      state: started
-      enabled: yes
-
-  - name: Disable default vhost
-    command: /usr/sbin/a2dissite default
-
-  - name: Configure apache
-    template:
-      src: webapp.erb
-      dest: /etc/apache2/sites-available/webapp
-      mode: '0644'
-    vars:
-      webapp_path: "{{ webapp_path }}"
-
-  - name: Enable webapp vhost
-    command: /usr/sbin/a2ensite webapp
-
-  - name: Restart apache
-    service:
-      name: apache2
-      state: restarted
+  - name: Alternative create MySQL database
+    shell:
+      cmd: "mysql -uroot -e 'create database {{ name }}'"
+    when: mysql_db_name is failed
+    become: yes
 ```

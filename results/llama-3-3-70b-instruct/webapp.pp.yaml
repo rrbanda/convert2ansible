@@ -1,17 +1,12 @@
-
-
-
-        [OUTPUT]
-```
 ```yml
 ---
 - name: Deploy Rails Webapp
   hosts: all
   become: yes
   vars:
-    webapp_path: /opt/webapps/rails
     service_webapp_repo: "{{ lookup('env', 'service_webapp_repo') }}"
     service_webapp_tag: "{{ lookup('env', 'service_webapp_tag') }}"
+    webapp_path: /opt/webapps/rails
     db_user: "{{ lookup('env', 'db_user') }}"
     db_password: "{{ lookup('env', 'db_password') }}"
     db_name: "{{ lookup('env', 'db_name') }}"
@@ -20,7 +15,13 @@
   tasks:
   - name: Install dependencies
     apt:
-      name: ["rubygems", "ruby-dev", "libxml2-dev", "libxslt-dev", "libsqlite3-dev", "libmysqlclient-dev"]
+      name:
+        - rubygems
+        - ruby-dev
+        - libxml2-dev
+        - libxslt-dev
+        - libsqlite3-dev
+        - libmysqlclient-dev
       state: present
 
   - name: Install bundler
@@ -38,11 +39,12 @@
       path: /opt/webapps
       state: directory
 
-  - name: Clone webapp repo
+  - name: Fetch webapp repo
     git:
       repo: "{{ service_webapp_repo }}"
       dest: "{{ webapp_path }}"
       version: "{{ service_webapp_tag }}"
+      force: yes
 
   - name: Install unicorn
     file:
@@ -62,7 +64,7 @@
 
   - name: Configure database
     template:
-      src: database.yml.erb
+      src: templates/database.yml.j2
       dest: "{{ webapp_path }}/config/database.yml"
       mode: '0644'
     vars:
@@ -79,16 +81,14 @@
   - name: Create rails user
     user:
       name: rails
-      state: present
       comment: rails
       group: rails
       home: "{{ webapp_path }}"
 
-  - name: Set permissions
+  - name: Set ownership and permissions
     file:
       path: "{{ item }}"
       owner: rails
-      group: rails
       mode: '0755'
     with_items:
       - "{{ webapp_path }}/files"
@@ -98,7 +98,7 @@
 
   - name: Configure unicorn
     template:
-      src: unicorn.conf.erb
+      src: templates/unicorn.conf.j2
       dest: /etc/init/unicorn.conf
       mode: '0644'
     vars:
@@ -110,19 +110,19 @@
       state: started
       enabled: yes
 
-  - name: Disable default vhost
-    command: /usr/sbin/a2dissite default
+  - name: Disable default apache vhost
+    command: a2dissite default
 
   - name: Configure apache
     template:
-      src: webapp.erb
-      dest: /etc/apache2/sites-available/webapp
+      src: templates/webapp.conf.j2
+      dest: /etc/apache2/sites-available/webapp.conf
       mode: '0644'
     vars:
       webapp_path: "{{ webapp_path }}"
 
-  - name: Enable webapp vhost
-    command: /usr/sbin/a2ensite webapp
+  - name: Enable webapp apache vhost
+    command: a2ensite webapp
 
   - name: Restart apache
     service:

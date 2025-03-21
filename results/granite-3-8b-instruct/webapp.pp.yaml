@@ -1,53 +1,45 @@
-
-- name: Deploy Rails Webapp
-  hosts: all
+```yaml
+---
+- hosts: all
   become: yes
-  vars:
-    WEBAPP_PATH: "/opt/webapps/rails"
-    service_webapp_repo: "{{ lookup('env', 'service_webapp_repo') }}"
-    service_webapp_tag: "{{ lookup('env', 'service_webapp_tag') }}"
-    db_user: "{{ lookup('env', 'db_user') }}"
-    db_password: "{{ lookup('env', 'db_password') }}"
-    db_name: "{{ lookup('env', 'db_name') }}"
-    db_ip: "{{ lookup('env', 'db_ip') }}"
-
   tasks:
-    - name: Notify beginning of deploy
+    - name: Notify beginning deploy
       debug:
         msg: "Beginning deploy of {{ service_webapp_repo }} version {{ service_webapp_tag }} into {{ WEBAPP_PATH }}"
 
     - name: Install required packages
-      apt:
-        name:
-          - rubygems
-          - ruby-dev
-          - libxml2-dev
-          - libxslt-dev
-          - libsqlite3-dev
-          - libmysqlclient-dev
+      package:
+        name: "{{ item }}"
         state: present
+      with_items:
+        - rubygems
+        - ruby-dev
+        - libxml2-dev
+        - libxslt-dev
+        - libsqlite3-dev
+        - libmysqlclient-dev
 
     - name: Install bundler
       gem:
         name: bundler
         state: present
-        gem_home: /usr/local
-        gem_binary: /usr/local/bin/gem
-        extra_gems:
-          - rubygems
+      when: ansible_os_family == 'RedHat'
 
-    - name: Enable and start apache
-      service:
+    - name: Ensure Apache is installed
+      apt:
         name: apache2
-        state: started
-        enabled: yes
+        state: present
 
-    - name: Create webapp directory
+    - name: Ensure proxied HTTP module is enabled
+      command: a2enmod proxy_http
+      become: yes
+
+    - name: Ensure webapps directory exists
       file:
-        path: "{{ WEBAPP_PATH }}"
+        path: /opt/webapps
         state: directory
-        owner: rails
-        group: rails
+        owner: root
+        group: root
         mode: '0755'
 
     - name: Clone webapp repository
@@ -56,140 +48,89 @@
         dest: "{{ WEBAPP_PATH }}"
         update: yes
 
-    - name: Checkout webapp tag
+    - name: Checkout specified tag
       git:
         repo: "{{ service_webapp_repo }}"
         dest: "{{ WEBAPP_PATH }}"
         version: "{{ service_webapp_tag }}"
 
-    - name: Add unicorn to Gemfile
-      lineinfile:
-        path: "{{ WEBAPP_PATH }}/Gemfile.local"
-        line: "gem 'unicorn'"
+    - name: Add 'unicorn' to Gemfile
+      copy:
+        dest: "{{ WEBAPP_PATH }}/Gemfile.local"
+        content: 'gem 'unicorn''
+      when: ansible_os_family == 'RedHat'
 
-    - name: Install webapp dependencies
+    - name: Install gems
       command: bundle install --without development test rmagick postgresql
       args:
         chdir: "{{ WEBAPP_PATH }}"
-        creates: "{{ WEBAPP_PATH }}/config/database.yml"
+        creates: "{{ WEBAPP_PATH }}/vendor/bundle"
 
     - name: Generate secret key
       command: bundle exec rake generate_session_store
       args:
         chdir: "{{ WEBAPP_PATH }}"
-        creates: "{{ WEBAPP_PATH }}/config/database.yml"
 
     - name: Configure database.yml
       template:
         src: "webapp/database.yml.erb"
         dest: "{{ WEBAPP_PATH }}/config/database.yml"
-      vars:
-        db_user: "{{ db_user }}"
-        db_password: "{{ db_password }}"
-        db_name: "{{ db_name }}"
-        db_ip: "{{ db_ip }}"
+      variables:
+        db_user: "{{ get_cloudify_attribute('user', 'service', 'redmine_puppet', 'mysql') }}"
+        db_password: "{{ get_cloudify_attribute('password', 'service', 'redmine_puppet', 'mysql') }}"
+        db_name: "{{ get_cloudify_attribute('db_name', 'service', 'redmine_puppet', 'mysql') }}"
+        db_ip: "{{ get_cloudify_attribute('ip', 'service', 'redmine_puppet', 'mysql') }}"
+      when: ansible_os_family == 'RedHat'
 
     - name: Run database migrations and load default data
       command: bundle exec rake db:migrate RAILS_ENV=production && bundle exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=en
       args:
         chdir: "{{ WEBAPP_PATH }}"
-        creates: "{{ WEBAPP_PATH }}/config/database.yml"
 
     - name: Create rails user
       user:
         name: rails
-        comment: rails
         shell: /bin/sh
         home: "{{ WEBAPP_PATH }}"
         createhome: yes
-        system: no
-        groups: minimum
+        comment: rails
+        groups: root
         append: yes
+        system: yes
 
-    - name: Set ownership of webapp directories
+    - name: Ensure directories owned by rails user
       file:
-        path:
-          - "{{ WEBAPP_PATH }}/files"
-          - "{{ WEBAPP_PATH }}/log"
-          - "{{ WEBAPP_PATH }}/tmp"
-          - "{{ WEBAPP_PATH }}/public"
+        path: "{{ item }}"
         owner: rails
         group: rails
         mode: '0755'
+        state: directory
+      with_items:
+        - "{{ WEBAPP_PATH }}/files"
+        - "{{ WEBAPP_PATH }}/log"
+        - "{{ WEBAPP_PATH }}/tmp"
+        - "{{ WEBAPP_PATH }}/public"
 
-    - name: Configure unicorn
-      upstart:
-        job: unicorn
-        description: unicorn app server
+    - name: Configure Unicorn
+      upstart_job:
+        name: unicorn
         command: start-stop-daemon --start -c rails -d {{ WEBAPP_PATH }} --exec /usr/local/bin/bundle -- exec unicorn_rails -E production
-        start_on_boot: yes
-        start_on_failure: yes
-        start_on_restart: yes
-        start_on_unknown: yes
-        start_on_unknown_failure: yes
-        start_on_unknown_restart: yes
-        start_on_unknown_unknown: yes
-        start_on_unknown_unknown_failure: yes
-        start_on_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_ansible_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_ansible_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_failure: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_restart: yes
-        start_on_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown_unknown: yes
-        start_on_unknown_unknown_unknown_unknown_ansible_unknown_unknown_unknown_unknown_unknown_
+        ensure: present
+
+    - name: Disable default Apache vhost
+      command: /usr/sbin/a2dissite default
+      when: ansible_os_family == 'Debian'
+
+    - name: Configure Apache vhost
+      apache_vhost:
+        name: webapp
+        template: "webapp/webapp.erb"
+        listen: 80
+        port: 80
+        servername: localhost
+        docroot: "{{ WEBAPP_PATH }}/public"
+        user: rails
+        group: rails
+      when: ansible_os_family == 'Debian'
+...
+```

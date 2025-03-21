@@ -1,25 +1,16 @@
-
-```yaml
 ---
-- name: Create MySQL database
-  hosts: localhost
-  vars:
-    mysql_root_password: "your_root_password"
-    mysql_database: "your_database_name"
+- hosts: all
+  become: true
+  roles:
+    - mysql
 
   tasks:
-    - name: Ensure MySQL server is installed
-      apt:
-        name: mysql-server
-        state: present
+    - name: Ensure database exists
+      command: /usr/bin/mysql -uroot -e "create database {{ item }}"
+      when: "/usr/bin/mysql -uroot {{ item }}" is failed
+      with_items:
+        - "{{ mysql_databases }}"
+      become: yes
+      become_user: root
 
-    - name: Start and enable MySQL service
-      service:
-        name: mysql
-        state: started
-        enabled: yes
-
-    - name: Create MySQL database
-      command: /usr/bin/mysql -uroot -e "create database {{ mysql_database }}"
-      when: "'your_database_name' not in /usr/bin/mysql -uroot"
-```
+Please replace `mysql_databases` with the actual variable containing your database list in your Ansible setup. The provided code will create a MySQL database for each item in the `mysql_databases` list if it doesn't already exist.
