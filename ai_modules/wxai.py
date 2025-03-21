@@ -39,7 +39,6 @@ class WxAI(Explanator):
             project_id=self.project_id
         )
 
-
         prompt = f"""As a software developer take the {context} and change it to a Ansible Playbook and only provide the yaml code and do not display thought process or any comments or explanation: 
         {code}
         """
@@ -61,11 +60,7 @@ class WxAI(Explanator):
         ]
 
 
-        output = reasoning_model.chat(messages=messages)['choices'][0]['message']['content']
-        return output
-    
-       # print(data['results'][0]['generated_text'])
-       # return data['results'][0]['generated_text']
+        return reasoning_model.chat(messages=messages)['choices'][0]['message']['content']
     
     def answer_user_query(self,question,references):	
         return
