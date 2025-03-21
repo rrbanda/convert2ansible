@@ -1,59 +1,45 @@
+Here is my response:
 
+```yaml
 ---
-- name: Deploy Rails Webapp
+- name: Deploy Rails webapp
   hosts: all
-  become: yes
   vars:
-    WEBAPP_PATH: "/opt/webapps/rails"
+    WEBAPP_PATH: /opt/webapps/rails
     service_webapp_repo: "{{ lookup('env', 'service_webapp_repo') }}"
     service_webapp_tag: "{{ lookup('env', 'service_webapp_tag') }}"
-    db_user: "{{ lookup('env', 'user') }}"
-    db_password: "{{ lookup('env', 'password') }}"
+    db_user: "{{ lookup('env', 'db_user') }}"
+    db_password: "{{ lookup('env', 'db_password') }}"
     db_name: "{{ lookup('env', 'db_name') }}"
-    db_ip: "{{ lookup('env', 'ip') }}"
+    db_ip: "{{ lookup('env', 'db_ip') }}"
 
   tasks:
-    - name: Begin deploy of {{ service_webapp_repo }} version {{ service_webapp_tag }} into {{ WEBAPP_PATH }}
+    - name: Notify beginning deploy
       debug:
         msg: "Beginning deploy of {{ service_webapp_repo }} version {{ service_webapp_tag }} into {{ WEBAPP_PATH }}"
 
-    - name: Install required packages
+    - name: Ensure packages are installed
       apt:
-        name:
-          - rubygems
-          - ruby-dev
-          - libxml2-dev
-          - libxslt-dev
-          - libsqlite3-dev
-          - libmysqlclient-dev
+        name: "{{ item }}"
         state: present
+      with_items:
+        - ruby-dev
+        - libxml2-dev
+        - libxslt-dev
+        - libsqlite3-dev
+        - libmysqlclient-dev
+        - bundler
 
-    - name: Install bundler
-      gem:
-        name: bundler
-        state: present
-        gem_home: /usr/local
-        gem_binary: /usr/local/bin/gem
-        extra_gems:
-          - rubygems
-
-    - name: Enable and start apache
-      service:
-        name: apache2
-        state: started
-        enabled: yes
-
-    - name: Create webapp directory
+    - name: Create webapps directory
       file:
         path: "{{ WEBAPP_PATH }}"
         state: directory
         mode: '0755'
 
-    - name: Clone webapp repository
+    - name: Fetch webapp repo
       git:
         repo: "{{ service_webapp_repo }}"
         dest: "{{ WEBAPP_PATH }}"
-        update: yes
 
     - name: Checkout webapp tag
       git:
@@ -62,227 +48,87 @@
         version: "{{ service_webapp_tag }}"
 
     - name: Add unicorn to Gemfile
-      lineinfile:
-        path: "{{ WEBAPP_PATH }}/Gemfile.local"
-        line: "gem 'unicorn'"
+      copy:
+        content: |-
+          gem 'unicorn'
+        dest: "{{ WEBAPP_PATH}}/Gemfile.local"
+        owner: root
+        group: root
+        mode: '0644'
+        require:
+          - apt.cmd
+          - git
 
-    - name: Install gems
+    - name: Bundle install
       command: bundle install --without development test rmagick postgresql
       args:
         chdir: "{{ WEBAPP_PATH }}"
         creates: "{{ WEBAPP_PATH }}/config/database.yml"
+      environment:
+        PATH: /usr/bin:/usr/local/bin:/bin
+      becomes: yes
+      registers: bundle_install_out
 
-    - name: Generate secret key
+    - name: Generate secret
       command: bundle exec rake generate_session_store
       args:
         chdir: "{{ WEBAPP_PATH }}"
-        creates: "{{ WEBAPP_PATH }}/config/database.yml"
+      environment:
+        PATH: /usr/bin:/usr/local/bin:/bin
+      becomes: yes
+      when: bundle_install_out|success
 
     - name: Configure database.yml
       template:
-        src: "webapp/database.yml.erb"
+        src: database.yml.erb
         dest: "{{ WEBAPP_PATH }}/config/database.yml"
-      vars:
-        db_user: "{{ db_user }}"
-        db_password: "{{ db_password }}"
-        db_name: "{{ db_name }}"
-        db_ip: "{{ db_ip }}"
+      when: bundle_install_out|success
 
-    - name: Run database migrations and load default data
+    - name: Rake database tasks
       command: bundle exec rake db:migrate RAILS_ENV=production && bundle exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=en
       args:
         chdir: "{{ WEBAPP_PATH }}"
-        creates: "{{ WEBAPP_PATH }}/config/database.yml"
+      environment:
+        PATH: /usr/bin:/usr/local/bin:/bin
+      becomes: yes
+      when: bundle_install_out|success
 
     - name: Create rails user
       user:
         name: rails
-        home: "{{ WEBAPP_PATH }}"
         shell: /bin/sh
-        state: present
-
-    - name: Set ownership of webapp directories
-      file:
-        path:
-          - "{{ WEBAPP_PATH }}/files"
-          - "{{ WEBAPP_PATH }}/log"
-          - "{{ WEBAPP_PATH }}/tmp"
-          - "{{ WEBAPP_PATH }}/public"
-        owner: rails
-        group: rails
-        mode: '0755'
-
-    - name: Configure unicorn
-      copy:
-        content: |
-          start-stop-daemon --start -c rails -d {{ WEBAPP_PATH }} --exec /usr/local/bin/bundle -- exec unicorn_rails -E production
-        dest: /etc/init/unicorn.conf
-      notify: Restart unicorn
-
-    - name: Restart unicorn
-      service:
-        name: unicorn
-        state: restarted
-
-    - name: Configure apache vhost
-      template:
-        src: "webapp/webapp.erb"
-        dest: /etc/apache2/sites-available/webapp.conf
-      notify: Restart apache
-
-    - name: Enable apache vhost
-      command: a2ensite webapp.conf
-      args:
-        creates: /etc/apache2/sites-enabled/webapp.conf
-
-    - name: Disable default apache vhost
-      command: a2dissite default
-      args:
-        requires:
-          - service: apache2
-          - enabled: yes
-
----
-
-[OUTPUT]
-- name: Deploy Rails Webapp
-  hosts: all
-  become: yes
-  vars:
-    WEBAPP_PATH: "/opt/webapps/rails"
-    service_webapp_repo: "{{ lookup('env', 'service_webapp_repo') }}"
-    service_webapp_tag: "{{ lookup('env', 'service_webapp_tag') }}"
-    db_user: "{{ lookup('env', 'user') }}"
-    db_password: "{{ lookup('env', 'password') }}"
-    db_name: "{{ lookup('env', 'db_name') }}"
-    db_ip: "{{ lookup('env', 'ip') }}"
-
-  tasks:
-    - name: Begin deploy of {{ service_webapp_repo }} version {{ service_webapp_tag }} into {{ WEBAPP_PATH }}
-      debug:
-        msg: "Beginning deploy of {{ service_webapp_repo }} version {{ service_webapp_tag }} into {{ WEBAPP_PATH }}"
-
-    - name: Install required packages
-      apt:
-        name:
-          - rubygems
-          - ruby-dev
-          - libxml2-dev
-          - libxslt-dev
-          - libsqlite3-dev
-          - libmysqlclient-dev
-        state: present
-
-    - name: Install bundler
-      gem:
-        name: bundler
-        state: present
-        gem_home: /usr/local
-        gem_binary: /usr/local/bin/gem
-        extra_gems:
-          - rubygems
-
-    - name: Enable and start apache
-      service:
-        name: apache2
-        state: started
-        enabled: yes
-
-    - name: Create webapp directory
-      file:
-        path: "{{ WEBAPP_PATH }}"
-        state: directory
-        mode: '0755'
-
-    - name: Clone webapp repository
-      git:
-        repo: "{{ service_webapp_repo }}"
-        dest: "{{ WEBAPP_PATH }}"
-        update: yes
-
-    - name: Checkout webapp tag
-      git:
-        repo: "{{ service_webapp_repo }}"
-        dest: "{{ WEBAPP_PATH }}"
-        version: "{{ service_webapp_tag }}"
-
-    - name: Add unicorn to Gemfile
-      lineinfile:
-        path: "{{ WEBAPP_PATH }}/Gemfile.local"
-        line: "gem 'unicorn'"
-
-    - name: Install gems
-      command: bundle install --without development test rmagick postgresql
-      args:
-        chdir: "{{ WEBAPP_PATH }}"
-        creates: "{{ WEBAPP_PATH }}/config/database.yml"
-
-    - name: Generate secret key
-      command: bundle exec rake generate_session_store
-      args:
-        chdir: "{{ WEBAPP_PATH }}"
-        creates: "{{ WEBAPP_PATH }}/config/database.yml"
-
-    - name: Configure database.yml
-      template:
-        src: "webapp/database.yml.erb"
-        dest: "{{ WEBAPP_PATH }}/config/database.yml"
-      vars:
-        db_user: "{{ db_user }}"
-        db_password: "{{ db_password }}"
-        db_name: "{{ db_name }}"
-        db_ip: "{{ db_ip }}"
-
-    - name: Run database migrations and load default data
-      command: bundle exec rake db:migrate RAILS_ENV=production && bundle exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=en
-      args:
-        chdir: "{{ WEBAPP_PATH }}"
-        creates: "{{ WEBAPP_PATH }}/config/database.yml"
-
-    - name: Create rails user
-      user:
-        name: rails
         home: "{{ WEBAPP_PATH }}"
-        shell: /bin/sh
-        state: present
+      when: bundle_install_out|success
 
-    - name: Set ownership of webapp directories
+    - name: Set permissions for webapp files
       file:
-        path:
-          - "{{ WEBAPP_PATH }}/files"
-          - "{{ WEBAPP_PATH }}/log"
-          - "{{ WEBAPP_PATH }}/tmp"
-          - "{{ WEBAPP_PATH }}/public"
+        path: "{{ item }}"
         owner: rails
-        group: rails
         mode: '0755'
+      with_items:
+        - "{{ WEBAPP_PATH }}/files"
+        - "{{ WEBAPP_PATH }}/log"
+        - "{{ WEBAPP_PATH }}/tmp"
+        - "{{ WEBAPP_PATH }}/public"
+      when: bundle_install_out|success
 
-    - name: Configure unicorn
-      copy:
-        content: |
-          start-stop-daemon --start -c rails -d {{ WEBAPP_PATH }} --exec /usr/local/bin/bundle -- exec unicorn_rails -E production
-        dest: /etc/init/unicorn.conf
-      notify: Restart unicorn
-
-    - name: Restart unicorn
-      service:
+    - name: Configure Unicorn service
+      upstart_job:
         name: unicorn
-        state: restarted
+        command: start-stop-daemon --start -c rails -d {{ WEBAPP_PATH }} --exec /usr/local/bin/bundle -- exec unicorn_rails -E production
+        start_secs: 10
+        process_name: unicorn
+        user: rails
+        start_on_boot: yes
+      when: bundle_install_out|success
 
-    - name: Configure apache vhost
+    - name: Disable default Apache site
+      command: /usr/sbin/a2dissite default
+      when: bundle_install_out|success
+
+    - name: Add Rails vhost configuration
       template:
-        src: "webapp/webapp.erb"
+        src: webapp.erb
         dest: /etc/apache2/sites-available/webapp.conf
-      notify: Restart apache
-
-    - name: Enable apache vhost
-      command: a2ensite webapp.conf
-      args:
-        creates: /etc/apache2/sites-enabled/webapp.conf
-
-    - name: Disable default apache vhost
-      command: a2dissite default
-      args:
-        requires:
-          - service: apache2
-          - enabled: yes
+      when: bundle_install_out|success
+```

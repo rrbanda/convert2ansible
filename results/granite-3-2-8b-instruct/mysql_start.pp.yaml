@@ -1,16 +1,32 @@
- Ansible Playbook equivalent of the Puppet module
+Here is my response:
 
-        [OUTPUT]
-        - name: Create MySQL database
-          hosts: localhost
-          tasks:
-            - name: Ensure MySQL server is running
-              ansible.builtin.service:
-                name: mysql
-                state: started
+```yaml
+---
+- hosts: mysql_servers
+  become: yes
+  vars:
+    mysql_root_password: "your_root_password"
+  tasks:
+    - name: Ensure MySQL Server is installed
+      apt:
+        name: mysql-server
+        state: present
 
-            - name: Create MySQL database
-              ansible.builtin.command:
-                creates: /usr/bin/mysql -uroot ${name}
-                command: /usr/bin/mysql -uroot -e "create database ${name}"
-              when: "/usr/bin/mysql -uroot ${name}" not in ansible_cmd_ptp
+    - name: Start and enable MySQL Server
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+
+    - name: Create MySQL Database
+      become_user: root
+      ansible.builtin.command: "mysql -uroot -p{{ mysql_root_password }} -e 'create database {{ item }}'"
+      loop:
+        - "{{ mysql_db_name }}"
+      register: db_creation
+      until: db_creation.rpc_retcode == 0
+      retries: 5
+      delay: 5
+```
+
+Note: Replace `mysql_servers` with your actual target hosts and `your_root_password` with the appropriate MySQL root password. Also, ensure `mysql_db_name` is defined elsewhere in your playbook or passed as a variable.

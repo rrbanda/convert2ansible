@@ -1,89 +1,53 @@
+Here is my response:
 
-- name: Remove proxy from /etc/apt/apt.conf
-  hosts: all
-  become: true
-  tasks:
-    - name: Remove proxy from /etc/apt/apt.conf
-      command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
-      when: grep Acquire::http::Proxy /etc/apt/apt.conf
-
+```yaml
+---
 - name: Configure apt cacher client
   hosts: all
-  become: true
+  become: yes
   vars:
-    cacher_ipaddress: "{{ lookup('lookup', 'interface_ipaddress', servers[0], servers[0].apt.cacher_interface) }}"
-    port: "{{ servers[0].apt.cacher_port }}"
-    proxy_ssl: "{{ servers[0].apt.cacher_ssl_support }}"
-    bypass: "{{ node.apt.cache_bypass }}"
+    proxy: "{{ lookup('env', 'APT_CACHER_IP') }}"
+    port: 3142
+    proxy_ssl: false
+    bypass: []
   tasks:
-    - name: Create or update /etc/apt/apt.conf.d/01proxy
-      template:
-        src: 01proxy.erb
-        dest: /etc/apt/apt.conf.d/01proxy
-        owner: root
-        group: root
-        mode: 00644
-        variables:
-          proxy: "{{ cacher_ipaddress }}"
-          port: "{{ port }}"
-          proxy_ssl: "{{ proxy_ssl }}"
-          bypass: "{{ bypass }}"
-      notify:
-        - Run apt-get update
-      when: servers.length > 0
+    - name: Remove Acquire::http::Proxy from apt.conf
+      block:
+        - name: Check for proxy settings in apt.conf
+          command: grep Acquire::http::Proxy /etc/apt/apt.conf
+          register: apt_proxy_check
+          changed_when: false
+        - name: Remove proxy settings if found
+          command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
+          when: apt_proxy_check.stdout
 
-    - name: Delete /etc/apt/apt.conf.d/01proxy
+    - name: Configure apt proxy
+      block:
+        - name: Retrieve cacher server info
+          set_fact:
+            cacher_ipaddress: "{{ proxy }}"
+            cacher_port: "{{ port }}"
+        - name: Create apt proxy configuration file
+          template:
+            src: 01proxy.j2
+            dest: /etc/apt/apt.conf.d/01proxy
+            owner: root
+            group: root
+            mode: '00644'
+          notify:
+            - Run apt-get update
+      when: cacher_ipaddress
+
+    - name: Ensure apt-cacher-ng server found
+      debug:
+        msg: "apt-cacher-ng server found on {{ cacher_ipaddress }}. Port is {{ cacher_port }}"
+      when: cacher_ipaddress
+
+    - name: Remove apt proxy config if no server found
       file:
         path: /etc/apt/apt.conf.d/01proxy
         state: absent
-      when: servers.length == 0
+      when: not cacher_ipaddress
+```
 
-- name: Include apt default recipe
-  include_role:
-    name: apt
-    tasks: default
-
-[OUTPUT]
-- name: Remove proxy from /etc/apt/apt.conf
-  hosts: all
-  become: true
-  tasks:
-    - name: Remove proxy from /etc/apt/apt.conf
-      command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
-      when: grep Acquire::http::Proxy /etc/apt/apt.conf
-
-- name: Configure apt cacher client
-  hosts: all
-  become: true
-  vars:
-    cacher_ipaddress: "{{ lookup('lookup', 'interface_ipaddress', servers[0], servers[0].apt.cacher_interface) }}"
-    port: "{{ servers[0].apt.cacher_port }}"
-    proxy_ssl: "{{ servers[0].apt.cacher_ssl_support }}"
-    bypass: "{{ node.apt.cache_bypass }}"
-  tasks:
-    - name: Create or update /etc/apt/apt.conf.d/01proxy
-      template:
-        src: 01proxy.erb
-        dest: /etc/apt/apt.conf.d/01proxy
-        owner: root
-        group: root
-        mode: 00644
-        variables:
-          proxy: "{{ cacher_ipaddress }}"
-          port: "{{ port }}"
-          proxy_ssl: "{{ proxy_ssl }}"
-          bypass: "{{ bypass }}"
-      notify:
-        - Run apt-get update
-      when: servers.length > 0
-
-    - name: Delete /etc/apt/apt.conf.d/01proxy
-      file:
-        path: /etc/apt/apt.conf.d/01proxy
-        state: absent
-      when: servers.length == 0
-
-- name: Include apt default recipe
-  include_role:
-    name: apt
-    tasks: default
+Note: The Ansible code assumes that the variables `lookup('env', 'APT_CACHER_IP')` and `port` are set elsewhere in the playbook or in the environment. The `01proxy.j2` template should be provided separately. The tasks are organized to mimic the logic of the Chef recipe.

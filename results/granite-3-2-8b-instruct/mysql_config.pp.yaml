@@ -1,105 +1,102 @@
-
-ansible-playbook code:
+Here is my response:
 
 ```yaml
 ---
-- name: Configure MySQL
-  hosts: all
+- name: MySQL Configuration
+  hosts: ubuntu_servers
+  become: yes
   vars:
-    root_password: 'UNSET'
-    old_root_password: ''
-    bind_address: '{{ mysql_params.bind_address }}'
-    port: '{{ mysql_params.port }}'
-    etc_root_password: '{{ mysql_params.etc_root_password }}'
-    service_name: '{{ mysql_params.service_name }}'
-    config_file: '{{ mysql_params.config_file }}'
-    socket: '{{ mysql_params.socket }}'
-    pidfile: '{{ mysql_params.pidfile }}'
-    datadir: '{{ mysql_params.datadir }}'
-    ssl: '{{ mysql_params.ssl }}'
-    ssl_ca: '{{ mysql_params.ssl_ca }}'
-    ssl_cert: '{{ mysql_params.ssl_cert }}'
-    ssl_key: '{{ mysql_params.ssl_key }}'
-    log_error: '{{ mysql_params.log_error }}'
-    default_engine: 'UNSET'
-    root_group: '{{ mysql_params.root_group }}'
-    restart: '{{ mysql_params.restart }}'
+    root_password: 'changeme'
+    bind_address: '0.0.0.0'
+    port: 3306
+    ssl: false
+    ssl_ca: ''
+    ssl_cert: ''
+    ssl_key: ''
+    log_error: '/var/log/mysql/error.log'
+    datadir: /var/lib/mysql
+    service_name: mysql
+    config_file: /etc/mysql/my.cnf
+    etc_root_password: true
+    default_engine: innodb
+    root_group: 'mysql'
+    restart: true
 
   tasks:
-    - name: Ensure root user password file is present
+    - name: Ensure directories exist
       file:
-        owner: 'root'
-        group: '{{ root_group }}'
-        mode: '0400'
-        notify:
-          - restart_mysql_service
+        path: "/etc/mysql/{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - conf.d
+        - my.cnf
 
-    - name: Validate SSL parameters
-      debug:
-        msg: "The ssl_ca parameter is required when ssl is true"
-      when: ssl and ssl_ca == ''
+    - name: Manage MySQL root password
+      block:
+        - name: Set new MySQL root password
+          command: >
+            mysqladmin -u root {{ old_root_password | default("") }} password '{{ root_password }}'
+          register: set_mysql_rootpw
+          changed_when: 'set_mysql_rootpw.rc != 0'
+          notify: Restart MySQL
 
-    - name: Validate SSL parameters
-      debug:
-        msg: "The ssl_cert parameter is required when ssl is true"
-      when: ssl and ssl_cert == ''
+        - name: Create .my.cnf for root user
+          copy:
+            content: |
+              [[client]]
+              user=root
+              password={{ root_password }}
+              host=localhost
+              tcp-port={{ port }}
+              socket=/var/run/mysqld/mysqld.sock
+            dest: /root/.my.cnf
+            owner: root
+            group: root
+            mode: '0400'
+          when: root_password != 'UNSET'
 
-    - name: Validate SSL parameters
-      debug:
-        msg: "The ssl_key parameter is required when ssl is true"
-      when: ssl and ssl_key == ''
-
-    - name: Restart MySQL service
-      service:
-        name: "{{ service_name }}"
-        state: restarted
-        enabled: yes
-      register: result
-      when: restart
-      notify:
-        - restart_mysql_service
-
-    - name: Set MySQL root password
-      command: "mysqladmin -u root {{ old_pw }} password '{{ root_password }}'"
+        - name: Ensure /etc/my.cnf has root password
+          copy:
+            content: |
+              [[client]]
+              user=root
+              password={{ root_password }}
+              host=localhost
+              tcp-port={{ port }}
+              socket=/var/run/mysqld/mysqld.sock
+            dest: /etc/my.cnf
+            owner: root
+            group: root
+            mode: '0644'
+          when: etc_root_password | bool
+          notify: Restart MySQL
+      become_user: root
       when: root_password != 'UNSET'
-      register: set_mysql_rootpw_result
-      until: "mysqladmin -u root -p'{{ root_password }}' status > /dev/null"
-      changed_when: "set_mysql_rootpw_result.rc == 0"
-      notify:
-        - restart_mysql_service
-      vars:
-        old_pw: "{{ '' if old_root_password == '' else '-p\'{{ old_root_password }}\'' }}"
 
-    - name: Create root .my.cnf file
+    - name: Configure MySQL service parameters
       template:
-        src: 'my.cnf.pass.erb'
-        dest: '/root/.my.cnf'
-      when: root_password != 'UNSET'
-      register: create_root_my_cnf
-      requires:
-        - set_mysql_rootpw_result
+        src: my.cnf.erb
+        dest: "{{ config_file }}"
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart MySQL
 
-    - name: Create /etc/my.cnf file
-      template:
-        src: 'my.cnf.erb'
-        dest: '{{ config_file }}'
-      when: root_password != 'UNSET'
-      register: create_etc_my_cnf
-      requires:
-        - set_mysql_rootpw_result
-
-    - name: Ensure MySQL directories are present
+    - name: Ensure /etc/mysql exists
       file:
-        path:
-          - '/etc/mysql'
-          - '/etc/mysql/conf.d'
+        path: /etc/mysql
         state: directory
         mode: '0755'
 
-    - name: Ensure root user password file is present
-      file:
-        path: '/root/.my.cnf'
-        state: present
-      when: root_password == 'UNSET'
-
+    - name: Restart MySQL service if requested
+      service:
+        name: "{{ service_name }}"
+        state: restarted
+      when: restart
+      become: yes
+      become_user: root
+      tags: [restart_mysql]
 ```
+
+Please note that the above Ansible playbook is a direct translation of the provided Puppet module, assuming some default values and logic. It might need adjustments based on specific environment requirements. Specifically, the `my.cnf.erb` and `my.cnf.pass.erb` templates are not provided here, but would need to be created to handle variable substitutions.
