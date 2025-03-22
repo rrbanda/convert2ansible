@@ -1,16 +1,30 @@
 ---
 - hosts: all
-  become: true
-  roles:
-    - mysql
-
+  become: yes
   tasks:
-    - name: Ensure database exists
-      command: /usr/bin/mysql -uroot -e "create database {{ item }}"
-      when: "/usr/bin/mysql -uroot {{ item }}" is failed
-      with_items:
-        - "{{ mysql_databases }}"
-      become: yes
-      become_user: root
+    - name: Ensure MySQL server is installed
+      rpm_package:
+        name: mysql-server
+        state: present
 
-Please replace `mysql_databases` with the actual variable containing your database list in your Ansible setup. The provided code will create a MySQL database for each item in the `mysql_databases` list if it doesn't already exist.
+    - name: Start and enable MySQL service
+      service:
+        name: mysqld
+        state: started
+        enabled: yes
+
+    - name: Ensure 'mysql' user exists
+      user:
+        name: mysql
+        system: yes
+
+    - name: Ensure MySQL DB exists
+      become: yes
+      shell: >
+        /usr/bin/mysql -u mysql -e "CREATE DATABASE {{ item.db_name }}"
+      register: result
+      until: result is succeeded
+      retries: 5
+      delay: 5
+      with_items:
+        - db_name: {{ mysql_db_name }}

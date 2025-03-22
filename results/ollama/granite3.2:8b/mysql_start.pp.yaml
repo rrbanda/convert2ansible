@@ -1,18 +1,34 @@
-```yaml
 ---
-- hosts: all
+- name: Create MySQL database
+  hosts: your_host
+  become: yes
   tasks:
-    - name: Include MySQL server
-      include_role:
-        name: mysql_server
+    - name: Ensure MySQL server is installed
+      ansible.builtin.yum:
+        name: mysql-server
+        state: present
+      when: ansible_os_family == 'RedHat'
 
-    - name: Create database
-      command: /usr/bin/mysql -uroot -e "create database {{ item.name }}"
-      when: "'/usr/bin/mysql -uroot {{ item.name }}' | /usr/bin/test ! -f"
-      loop:
-        - { name: "{{ mysql_databases[item] }}" }
-      register: create_db_result
+    - name: Ensure MySQL client is installed
+      ansible.builtin.yum:
+        name: mysql
+        state: present
+      when: ansible_os_family == 'RedHat'
 
-    - debug:
-        var: create_db_result
-```
+    - name: Ensure MySQL is running
+      ansible.builtin.service:
+        name: mysqld
+        state: started
+        enabled: yes
+      when: ansible_os_family == 'RedHat'
+
+    - name: Create MySQL database
+      mysql_db:
+        name: your_db_name
+        state: present
+
+    - name: Execute custom MySQL command
+      ansible.builtin.command:
+        creates: "/usr/bin/mysql -uroot -e \"create database your_db_name\""
+        command: /usr/bin/mysql -uroot -e "create database your_db_name"
+      when: "'your_db_name' not in api.mysql_dbs.results"

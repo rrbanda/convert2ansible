@@ -1,100 +1,62 @@
-<think>
-Alright, so I need to convert the provided Chef Recipe into an Ansible Playbook. Let me start by understanding what the original recipe does.
+- name: Ensure apt cacher-client
+  hosts: all
+  become: yes
+  vars:
+    proxy: "{{ lookup('env', 'APT_CACHER_IPADDRESS') }}"
+    port: 3142
+    bypass: "{{ lookup('env', 'APT_CACHE_BYPASS') | default('true') }}"
+    cacher_ssl_support: "{{ lookup('env', 'APT_CACHER_SSL_SUPPORT') | default('false') }}"
+  tasks:
+    - name: Remove proxy from /etc/apt/apt.conf
+      command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
+      when: "'Acquire::http::Proxy' in ansible_facts['apt_conf_files']"
 
-The recipe is for installing and configuring an APT Cacher Client. It checks if the `node['apt']` attribute exists and whether it has a `cacher_ipaddress`. If so, it creates a new node with that IP as its default name and sets up various parameters like port, interface, and SSL support. Then, it looks for existing nodes that match these criteria or uses search to find the correct server.
+    - name: Set up apt cacher-client
+      block:
+        - name: Include variables from apt cacher node
+          include_vars:
+            file: "apt::cacher_{{ inventory_hostname }}.yml"
+          when: "'apt_cacher_ipaddress' in ansible_facts['apt_nodes']"
 
-If servers are found, it proceeds to create a template in `/etc/apt/apt.conf.d/01proxy` with the necessary proxy settings. If no server is found, it deletes this file instead.
+        - name: Add cacher to apt sources
+          lineinfile:
+            path: /etc/apt/sources.list
+            line: "deb http://{{ proxy }}:{{ port }}/debian {{ ansible_distribution_release }} main"
+            create: yes
+            insertafter: ^#\s*apt\s*mirror\s*for\s*(debianswed|ubuntuxenial)
 
-Now, converting this into Ansible Playbooks involves using YAML syntax and tasks from Ansible's APT module.
+        - name: Add cacher to apt sources (LLVM)
+          lineinfile:
+            path: /etc/apt/sources.list.d/llvm.list
+            line: "deb http://{{ proxy }}:{{ port }}/llvm-3.9 {{ ansible_distribution_release }} main"
+            create: yes
+            insertafter: ^#\s*apt\s*mirror\s*for\s*(debianswed|ubuntuxenial)
 
-First, I'll start by defining variables for consistency. I'll set `cacher_ipaddress`, `cacher_port`, and others based on the node attributes. This makes the rest of the playbooks easier to read.
+        - name: Add cacher to apt sources (snapcraft)
+          blockinfile:
+            path: /etc/apt/sources.list.d/snap.list
+            create: yes
+            insertafter: ^#\s*snapcraft\s*apt\s*mirror\s*for\s*(debianswed|ubuntuxenial)
+            block: |
+              deb http://{{ proxy }}:{{ port }}/snap/stable {{ ansible_distribution_release }} main
+              deb-src http://{{ proxy }}:{{ port }}/snap/stable {{ ansible_distribution_release }} main
 
-Next, I need to check if the APT cache server is enabled in the node attributes. Using a conditional task, I can skip further steps if it's disabled.
+        - name: Add cacher to apt sources (specific)
+          blockinfile:
+            path: /etc/apt/sources.list.d/custom.list
+            create: yes
+            insertafter: ^#\s*apt\s*mirror\s*for\s*(debianswed|ubuntuxenial)
+            block: |
+              deb http://{{ proxy }}:{{ port }}/custom {{ ansible_distribution_release }} main
+              deb-src http://{{ proxy }}:{{ port }}/custom {{ ansible_distribution_release }} main
+          when: exit_status == 0
 
-Then, there's the part where it looks for existing or new Cacher servers. I'll use an include statement to get the `search` function and then iterate over the found servers to collect their details. This will give me the necessary information like IP address and port.
+        - name: Update apt cache
+          command: apt-get update
+      when: "\"apt_caching_server:true\" in search_query and inventory_hostname in result.nodes"
 
-After identifying the server, I'll set variables based on its configuration. If no server is found, we need to handle that case by setting a flag indicating this.
-
-The next step is creating or updating the APT configuration file. Using the `template` module with an appropriate source (like `01proxy.j2`), I can dynamically insert the proxy settings. The owner, group, and mode should be set correctly, probably matching the original recipe's setup.
-
-Since Ansible doesn't have a direct equivalent for the Chef `override` attribute, I'll need to adjust the configuration based on whether compiling at runtime is enabled or not. This might involve setting `compiletime` correctly in the variables.
-
-Finally, if the server exists, I'll notify the `execute[apt-get update]` task immediately so that the APT sources are updated. If no server is found, I'll delete the proxy configuration file.
-
-Throughout this process, I need to ensure that the variable names and values align with what Ansible expects, avoiding any Chef-specific syntax. It's also important to handle both scenarios: when a Cacher server exists and when it doesn't, ensuring that the APT configuration is correctly managed in each case.
-
-I should double-check each task to make sure it corresponds accurately to the original recipe's functionality, especially regarding the use of `sed` commands or equivalent tasks for modifying configuration files. Using variables and loops will help keep the YAML concise and maintainable.
-
-In summary, my approach is to methodically translate each part of the Chef Recipe into Ansible Playbooks, ensuring all configurations are correctly applied based on the presence or absence of a Cacher server.
-</think>
-
-```yaml
----
-- hosts: all
-  become: apt
-  roles:
-    - name: apt
-      tag: cacher-client
-      vars:
-        cacher_ipaddress: "{{ node['apt']['cacher_ipaddress'] | default('') }}"
-        cacher_port: "{{ node['apt']['cacher_port'] | default('') }}"
-        cacher_interface: "{{ node['apt']['cacher_interface'] | default('') }}"
-        cacher_ssl_support: "{{ node['apt']['cacher_ssl_support'] | default(false) }}"
-        cache_bypass: "{{ node['apt']['cache_bypass'] | default(false) }}"
-
-- name: Check if APT cache server is enabled
-  set_fact:
-    use_cache_server: true
-  when: node['apt'] and (node['apt']['cacher_ipaddress'] or node['apt']['caching_server'])
-  else:
-    use_cache_server: false
-
-- name: Find existing APT cache servers or create new one
-  include: search
-  by-tags:
-    - name: apt_caching_server
-    - name: chef_environment
-      filter:
-        node['chef_environment'] in [{{ node.chef_environment }}]
-
-  register: cache_servers
-  when: use_cache_server
-
-- name: Set cacher server info based on found servers
-  set_fact:
-    cacher_ipaddress: "{{ cache_servers[0].ipaddress }}"
-    cacher_port: "{{ cache_servers[0]['apt']['cacher_port'] }}"
-    cacher_ssl_support: "{{ cache_servers[0]['apt']['cacher_ssl_support'] }}"
-  when: cache_servers and cache_servers.length > 0
-
-- name: Set APT cache server info if no server found
-  set_fact:
-    use_cache_server: false
-  unless: use_cache_server
-
-- name: Manage APT proxy configuration
-  template:
-    path: /etc/apt/apt.conf.d/01proxy
-    source: 01proxy.j2
-    variables:
-      proxy: cacher_ipaddress
-      port: cacher_port
-      proxy_ssl: cacher_ssl_support
-      bypass: cache_bypass
-    mode: 00644
-    owner: root
-    group: root
-  when: use_cache_server and node['apt']['compiletime']
-
-- name: Update APT sources if needed
-  action: execute
-  module: shell
-  command: apt-get update -y
-  when: use_cache_server
-
-- name: Delete APT proxy configuration if no cache server found
-  file:
-    path: /etc/apt/apt.conf.d/01proxy
-    state: absent
-  unless: use_cache_server
-```
+    - name: Remove apt cacher setup
+      file:
+        path: /etc/apt/sources.list.d/01proxy
+        state: absent
+      when: "\"apt_caching_server:true\" not in search_query"

@@ -1,25 +1,25 @@
 ```yml
 ---
-- name: Apache Setup
+- name: Configure Apache
   hosts: all
-  become: yes
   vars:
-    disable: false
-    apacheconf: default
-
+    disable: "{{ disable | default(false) }}"
+    apacheconf: "{{ apacheconf | default('default') }}"
   tasks:
-  - name: Install and start Apache
+  - name: Install and configure Apache
     block:
-    - name: Install Apache package
+    - name: Install Apache
       yum:
         name: "{{ 'httpd.x86_64' if ansible_architecture == 'x86_64' else 'httpd.i386' }}"
         state: "{{ 'present' if disable == false else 'absent' }}"
+      when: ansible_distribution in ['CentOS', 'RedHat']
 
     - name: Enable and start Apache service
       service:
         name: httpd
         state: "{{ 'running' if disable == false else 'stopped' }}"
         enabled: "{{ true if disable == false else false }}"
+      when: ansible_distribution in ['CentOS', 'RedHat']
 
     - name: Configure Apache
       template:
@@ -28,5 +28,5 @@
         mode: 0644
         owner: root
         group: root
-    when: ansible_os_family == "RedHat"
+      when: ansible_distribution in ['CentOS', 'RedHat']
 ```

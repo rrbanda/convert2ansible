@@ -1,48 +1,64 @@
 ```yml
 ---
-- name: Configure apt-cacher-ng client
+- name: Configure apt-cacher-ng
   hosts: all
   become: yes
+  vars:
+    apt_cacher_ipaddress: "{{ apt_cacher_ipaddress | default('') }}"
+    apt_cacher_port: "{{ apt_cacher_port | default('') }}"
+    apt_cacher_interface: "{{ apt_cacher_interface | default('') }}"
+    apt_cacher_ssl_support: "{{ apt_cacher_ssl_support | default('') }}"
+    cache_bypass: "{{ cache_bypass | default('') }}"
 
   tasks:
   - name: Remove proxy from /etc/apt/apt.conf
-    shell: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
-    when: apt_cacher_ipaddress is defined or apt_caching_server is defined
+    shell:
+      cmd: "sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf"
+    when: "'Acquire::http::Proxy' in ((apt_conf_content | default('')) | string)"
 
-  - name: Get cacher server IP
+  - name: Get apt-cacher-ng servers
     set_fact:
-      cacher_ipaddress: "{{ hostvars[groups['apt_caching_server'][0]]['ansible_host'] }}"
-    when: groups['apt_caching_server'] is defined
+      apt_cacher_servers: []
+    when: apt_cacher_ipaddress != "" or apt_caching_server != ""
 
-  - name: Get cacher server IP from interface
+  - name: Add local apt-cacher-ng server
     set_fact:
-      cacher_ipaddress: "{{ hostvars[groups['apt_caching_server'][0]]['ansible_' + apt_cacher_interface]['ipv4']['address'] }}"
-    when: apt_cacher_interface is defined
+      apt_cacher_servers: "{{ apt_cacher_servers | default([]) + [localhost] }}"
+    when: apt_cacher_ipaddress != ""
 
-  - name: Create 01proxy template
+  - name: Add remote apt-cacher-ng servers
+    set_fact:
+      apt_cacher_servers: "{{ apt_cacher_servers | default([]) + (groups['apt_caching_server'] | default([])) }}"
+    when: apt_caching_server != ""
+
+  - name: Search for apt-cacher-ng servers
+    set_fact:
+      apt_cacher_servers: "{{ apt_cacher_servers | default([]) + (hostvars | selectattr('apt_caching_server', 'equalto', true) | list | map(attribute='ansible_host') | list) }}"
+    when: apt_cacher_servers | length == 0
+
+  - name: Create /etc/apt/apt.conf.d/01proxy
     template:
-      src: 01proxy.j2
-      dest: /etc/apt/apt.conf.d/01proxy
-      mode: '0644'
-      owner: root
-      group: root
-    notify: apt-get update
-    when: cacher_ipaddress is defined
+      src: "01proxy.j2"
+      dest: "/etc/apt/apt.conf.d/01proxy"
+      mode: "0644"
+      owner: "root"
+      group: "root"
+    notify: update apt cache
+    when: apt_cacher_servers | length > 0
 
-  - name: Delete 01proxy file if no cacher server found
+  - name: Delete /etc/apt/apt.conf.d/01proxy
     file:
-      path: /etc/apt/apt.conf.d/01proxy
-      state: absent
-    when: cacher_ipaddress is not defined
+      path: "/etc/apt/apt.conf.d/01proxy"
+      state: "absent"
+    when: apt_cacher_servers | length == 0
 
-  - name: Run apt-get update
+  - name: Update apt cache
     apt:
       update_cache: yes
-      cache_valid_time: 3600
+    when: apt_cacher_servers | length > 0
 
   handlers:
-  - name: apt-get update
+  - name: update apt cache
     apt:
       update_cache: yes
-      cache_valid_time: 3600
 ```

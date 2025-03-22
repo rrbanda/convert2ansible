@@ -1,33 +1,27 @@
-<think>
-Alright, so I'm supposed to convert the given Puppet module into an Ansible Playbook. Let me start by understanding what the original Puppet code is doing.
-
-The Puppet code defines a custom resource called `mysql::db`. It includes the `mysql::server` module, which probably sets up the MySQL server. Then, there's an `exec` task that creates a database named after the resource variable `${name}` using the command `/usr/bin/mysql -uroot -e "create database ${name}"`.
-
-In Ansible, I know that playbooks use YAML files with tasks and handlers. The goal is to replicate the functionality of the Puppet code but in Ansible's syntax.
-
-First, I'll need a Playbook structure. Let's start with the hosts file. Since the original code doesn't specify any hosts, I can assume it applies to all hosts or perhaps to a specific group. For simplicity, I'll target `all` hosts.
-
-Next, the tasks. The Puppet code includes the server module and then runs an exec command to create the database. In Ansible, including a role would be done using the include_tasks directive. So I'll add `include: mysql_server` at the beginning of the playbook to handle the MySQL setup.
-
-Then, the exec command in Puppet is translated into an Ansible command module task. The original command is `/usr/bin/mysql -uroot ${name}` and the actual creation command is `/usr/bin/mysql -uroot -e "create database ${name}"`. In Ansible, I'll use the command module with these arguments.
-
-I also notice that in Puppet, there's a `require` for the Service["mysql"], which means the exec task depends on MySQL being running. In Ansible, services are usually handled with systemd units, so I might need to ensure that the mysql service is enabled and started. Alternatively, if the `mysql_server` role takes care of this, then including it should suffice.
-
-Putting it all together, the Playbook will have a task to include the MySQL server setup and another task to create the database using the command module. I'll structure it with two plays: one for the server setup and another for creating the database.
-
-I need to make sure variable handling is correct. The `${name}` variable in Puppet is passed as a parameter, so in Ansible, I should use the same variable, perhaps as `name: "{{ db_name }}"` or similar.
-
-Finally, I'll write out the YAML structure, ensuring proper indentation and syntax are followed.
-</think>
-
-```yaml
-- name: Create MySQL Database
-  hosts: all
+---
+- name: Install and configure MySQL database
+  hosts: your_target_host
+  become: yes
   tasks:
-    - include_tasks: mysql_server
-    - command: "/usr/bin/mysql -uroot -e 'create database {{ db_name }}'"
-      arguments:
-        name: "{{ db_name }}"
-      require:
-        - service: mysql
-```
+    - name: Include MySQL server module
+      include_role:
+        name: mysql
+
+    - name: Create MySQL database
+      command: /usr/bin/mysql -uroot -e "create database {{ item.db }}"
+      when: "'{{ item.db }}' not in %s"
+      loop:
+        - { db: "{{ my_db_name }}" }
+      register: result
+      until: result is succeeded
+      retries: 5
+      delay: 5
+      become: yes
+      become_user: root
+
+    - name: Check if database was created
+      command: /usr/bin/mysql -uroot -e "show databases like '{{ my_db_name }}'"
+      register: db_info
+      run_once: yes
+      delegate_to: localhost
+      ignore_errors: yes

@@ -1,36 +1,38 @@
 ---
-- name: Ensure Apache is configured
+- name: Ensure Apache is managed
   hosts: all
   become: yes
+  vars:
+    httpd_conf_source: "puppet:///modules/apache/httpd.conf"
+
   tasks:
     - name: Install httpd package
       package:
         name: httpd
         state: present
-      when: ansible_architecture == 'x86_64'
+      when: ansible_os_family == 'RedHat' and ansible_architecture == 'x86_64'
+      tags: [package, install]
 
-    - name: Install httpd package for i386
+    - name: Install httpd package (32-bit)
       package:
-        name: httpd-i386
+        name: httpd
         state: present
-      when: ansible_architecture == 'i686'
+      when: ansible_os_family == 'RedHat' and ansible_architecture == 'i386'
+      tags: [package, install]
 
-    - name: Check if Apache should be enabled
-      set_fact:
-        should_enable: "{{ ('false' != apache_disable) | ternary(true, false) }}"
-
-    - name: Start Apache service
+    - name: Ensure httpd service is managed
       service:
         name: httpd
-        state: "{{ ('running' if should_enable else 'stopped') | lowercase }}"
-        enabled: "{{ should_enable }}"
-      when: ansible_architecture == 'x86_64'
+        state: "{{ ('running' if apache_enabled else 'stopped') }}"
+        enabled: "{{ apache_enabled }}"
+      tags: [service]
 
-    - name: Ensure Apache configuration file exists
-      template:
-        src: httpd.conf.j2
+    - name: Ensure httpd.conf is configured
+      copy:
         dest: /etc/httpd/conf/httpd.conf
         owner: root
         group: root
         mode: 0644
-      when: ansible_architecture == 'x86_64'
+        content: "{{ httpd_conf_source }}"
+      when: apache_enabled
+      tags: [config]

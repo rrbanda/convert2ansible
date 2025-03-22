@@ -1,27 +1,20 @@
 ```yml
 ---
 - name: Deploy Rails Webapp
-  hosts: all
   become: yes
   vars:
-    service_webapp_repo: "{{ lookup('env', 'service_webapp_repo') }}"
-    service_webapp_tag: "{{ lookup('env', 'service_webapp_tag') }}"
-    webapp_path: /opt/webapps/rails
-    db_user: "{{ lookup('env', 'db_user') }}"
-    db_password: "{{ lookup('env', 'db_password') }}"
-    db_name: "{{ lookup('env', 'db_name') }}"
-    db_ip: "{{ lookup('env', 'db_ip') }}"
+    service_webapp_repo: "{{ service_webapp_repo }}"
+    service_webapp_tag: "{{ service_webapp_tag }}"
+    webapp_path: "/opt/webapps/rails"
+    db_user: "{{ lookup('url', 'http://localhost:8080/api/v3.1/attributes/service/redmine_puppet/mysql/user') }}"
+    db_password: "{{ lookup('url', 'http://localhost:8080/api/v3.1/attributes/service/redmine_puppet/mysql/password') }}"
+    db_name: "{{ lookup('url', 'http://localhost:8080/api/v3.1/attributes/service/redmine_puppet/mysql/db_name') }}"
+    db_ip: "{{ lookup('url', 'http://localhost:8080/api/v3.1/attributes/service/redmine_puppet/mysql/ip') }}"
 
   tasks:
   - name: Install dependencies
     apt:
-      name:
-        - rubygems
-        - ruby-dev
-        - libxml2-dev
-        - libxslt-dev
-        - libsqlite3-dev
-        - libmysqlclient-dev
+      name: ["rubygems", "ruby-dev", "libxml2-dev", "libxslt-dev", "libsqlite3-dev", "libmysqlclient-dev"]
       state: present
 
   - name: Install bundler
@@ -29,17 +22,17 @@
       name: bundler
       state: present
 
-  - name: Enable apache module
+  - name: Enable apache modules
     apache2_module:
-      name: proxy_http
       state: present
+      name: proxy_http
 
   - name: Create webapp directory
     file:
       path: /opt/webapps
       state: directory
 
-  - name: Fetch webapp repo
+  - name: Clone webapp repository
     git:
       repo: "{{ service_webapp_repo }}"
       dest: "{{ webapp_path }}"
@@ -47,24 +40,25 @@
       force: yes
 
   - name: Install unicorn
-    file:
-      path: "{{ webapp_path }}/Gemfile.local"
-      state: touch
-      content: "gem 'unicorn'\n"
+    template:
+      src: templates/Gemfile.local
+      dest: "{{ webapp_path }}/Gemfile.local"
+      mode: '0644'
+    notify: restart unicorn
 
   - name: Run bundle install
-    command: bundle install --without development test rmagick postgresql
-    args:
-      chdir: "{{ webapp_path }}"
+    shell:
+      cmd: bundle install --without development test rmagick postgresql
+      cwd: "{{ webapp_path }}"
 
   - name: Generate secret
-    command: bundle exec rake generate_session_store
-    args:
-      chdir: "{{ webapp_path }}"
+    shell:
+      cmd: bundle exec rake generate_session_store
+      cwd: "{{ webapp_path }}"
 
   - name: Configure database
     template:
-      src: templates/database.yml.j2
+      src: templates/database.yml
       dest: "{{ webapp_path }}/config/database.yml"
       mode: '0644'
     vars:
@@ -74,18 +68,17 @@
       db_ip: "{{ db_ip }}"
 
   - name: Run rake tasks
-    command: bundle exec rake db:migrate RAILS_ENV=production && bundle exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=en
-    args:
-      chdir: "{{ webapp_path }}"
+    shell:
+      cmd: bundle exec rake db:migrate RAILS_ENV=production && bundle exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=en
+      cwd: "{{ webapp_path }}"
 
   - name: Create rails user
     user:
       name: rails
-      comment: rails
-      group: rails
+      system: yes
       home: "{{ webapp_path }}"
 
-  - name: Set ownership and permissions
+  - name: Set permissions
     file:
       path: "{{ item }}"
       owner: rails
@@ -98,33 +91,29 @@
 
   - name: Configure unicorn
     template:
-      src: templates/unicorn.conf.j2
+      src: templates/unicorn.conf
       dest: /etc/init/unicorn.conf
       mode: '0644'
-    vars:
-      webapp_path: "{{ webapp_path }}"
-
-  - name: Start unicorn
-    service:
-      name: unicorn
-      state: started
-      enabled: yes
+    notify: restart unicorn
 
   - name: Disable default apache vhost
-    command: a2dissite default
+    shell:
+      cmd: a2dissite default
 
   - name: Configure apache
     template:
-      src: templates/webapp.conf.j2
+      src: templates/webapp.conf
       dest: /etc/apache2/sites-available/webapp.conf
       mode: '0644'
-    vars:
-      webapp_path: "{{ webapp_path }}"
+    notify: restart apache
 
-  - name: Enable webapp apache vhost
-    command: a2ensite webapp
+  handlers:
+  - name: restart unicorn
+    service:
+      name: unicorn
+      state: restarted
 
-  - name: Restart apache
+  - name: restart apache
     service:
       name: apache2
       state: restarted

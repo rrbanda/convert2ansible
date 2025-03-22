@@ -1,41 +1,31 @@
-Here is the equivalent Ansible Playbook:
-
-```yaml
 ---
-- name: Configure Apache
+- name: Install and manage Apache
   hosts: all
   vars:
+    apache_conf: "default"
     disable: "false"
-    apacheconf: "default"
+    package_name:
+      - "httpd.x86_64"
+      - "httpd.i386"
   tasks:
-    - name: Install Apache
+    - name: Install Apache package if disable is false
       package:
-        name: httpd
+        name: "{{ package_name }}"
         state: present
-      when: ansible_os_family in ['RedHat', 'CentOS'] and ansible_architecture == 'x86_64'
+      when: disable != "true"
 
-    - name: Install Apache (i386)
-      package:
-        name: httpd
-        state: present
-      when: ansible_os_family in ['RedHat', 'CentOS'] and ansible_architecture != 'x86_64'
-
-    - name: Enable/Disable Apache Service
+    - name: Enable and start Apache service if it's not disabled
       service:
         name: httpd
-        enabled: "{{ enable }}"
-        state: "{{ ensure }}"
-      when: ansible_os_family in ['RedHat', 'CentOS']
-      loop:
-        - {'enable': True, 'ensure': 'running'}
-        - {'enable': False, 'ensure': 'stopped'}
+        state: started
+        enabled: "{{ disable != 'true' }}"
+      when: disable != "true"
 
-    - name: Configure Apache Configuration File
+    - name: Ensure http.conf is configured
       copy:
-        src: "puppet:///modules/apache/httpd.conf"
-        dest: "/etc/httpd/conf/httpd.conf"
+        dest: /etc/httpd/conf/httpd.conf
+        mode: 0644
         owner: root
         group: root
-        mode: 0644
-      when: apacheconf == 'default'
-```
+        remote_src: true
+      when: disable != "true"

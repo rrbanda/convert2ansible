@@ -1,24 +1,31 @@
-Here is the equivalent Ansible Playbook for the provided Puppet module:
-
-```yaml
-- name: Create MySQL database
-  hosts: localhost
-  gather_facts: false
+---
+- name: Manage MySQL databases
+  hosts: all
+  become: true
   vars:
-    db_name: "{{ db_name }}"
+    databases:
+      - name: mydatabase
   tasks:
-    - name: Ensure MySQL service is running
+    - name: Ensure MySQL server is installed
+      apt:
+        name: mysql-server
+        state: present
+
+    - name: Create MySQL databases
+      mysql_db:
+        name: "{{ item.name }}"
+        state: present
+      loop: "{{ databases }}"
+
+    - name: Ensure MySQL database exists (created if not)
+      command: /usr/bin/mysql -uroot -e "create database {{ item.name }}"
+      when: "not /usr/bin/mysql -uroot -e \"show databases like \"{{ item.name }}\""
+      with_items: "{{ databases }}"
+      register: result
+      failed_when: result.rc != 0
+      changed_when: result.rc != 0
+
+    - name: Restart MySQL service
       service:
         name: mysql
-        state: started
-        enabled: yes
-      when: ansible_os_family == 'RedHat'
-
-    - name: Create database
-      command: /usr/bin/mysql -uroot -e "create database {{ db_name }}"
-      register: create_db
-      until: create_db.rc == 0
-      retries: 10
-      delay: 5
-      when: ansible_os_family == 'RedHat'
-```
+        state: restarted

@@ -3,71 +3,74 @@
   hosts: mysql_servers
   become: yes
   vars:
-    root_password: 'changeme'
+    root_password: 'UNSET'
     old_root_password: ''
-    bind_address: 0.0.0.0
-    port: 3306
+    bind_address: '0.0.0.0'
+    port: '3306'
+    etc_root_password: false
+    service_name: 'mysql'
+    config_file: '/etc/my.cnf'
+    socket: '/var/run/mysqld/mysqld.sock'
+    pidfile: '/var/run/mysqld/mysqld.pid'
+    datadir: '/var/lib/mysql'
     ssl: false
-    ssl_ca: /etc/ssl/certs/ssl-ca.crt
-    ssl_cert: /etc/ssl/certs/ssl-cert.crt
-    ssl_key: /etc/ssl/private/ssl-key.key
-    log_error: /var/log/mysql/error.log
-    datadir: /var/lib/mysql
-    service_name: mysql
-    config_file: /etc/mysql/my.cnf
-    default_engine: innodb
-    root_group: mysql
+    ssl_ca: ''
+    ssl_cert: ''
+    ssl_key: ''
+    log_error: '/var/log/mysql/error.log'
+    default_engine: 'InnoDB'
+    root_group: 'mysql'
+    restart: true
 
   tasks:
-    - name: Ensure directories exist
+    - name: Ensure MySQL directories
       file:
-        path: "{{ item }}"
+        path: "/etc/mysql"
         state: directory
         mode: '0755'
-      loop:
-        - /etc/mysql
-        - /etc/mysql/conf.d
-        - "{{ config_file|dirname }}"
 
-    - name: Configure root password
-      command: "mysqladmin -u root {{ ('-p' + old_root_password) if old_root_password else '' }} password '{{ root_password }}'"
+    - name: Ensure MySQL config directories
+      file:
+        path: "/etc/mysql/conf.d"
+        state: directory
+        mode: '0755'
+
+    - name: Configure my.cnf
+      template:
+        src: my.cnf.erb
+        dest: "{{ config_file }}"
+        mode: '0644'
+      when: ssl_ca is defined and ssl_cert is defined and ssl_key is defined
+
+    - name: Set MySQL root password
+      command: "mysqladmin -u root {{ old_root_password|default('') }} password '{{ root_password }}'"
+      register: mysql_rootpw_result
+      changed_when: mysql_rootpw_result.rc != 0
       become: yes
-      become_user: root
-      register: set_mysql_rootpw
-      changed_when: "'Access denied for user' not in set_mysql_rootpw.stdout"
-      failed_when: "'Access denied for user' in set_mysql_rootpw.stdout"
-      notify:
-        - Restart MySQL Service
+      when: root_password != 'UNSET'
 
-    - name: Create .my.cnf
-      copy:
-        content: "{{ lookup('template', 'mysql/my.cnf.pass.erb') }}"
-        dest: /root/.my.cnf
-        owner: root
-        group: mysql
+    - name: Ensure root .my.cnf file exists
+      file:
+        path: "/root/.my.cnf"
+        state: present
         mode: '0400'
       when: root_password != 'UNSET'
-      notify:
-        - Restart MySQL Service
 
-    - name: Persist .my.cnf
+    - name: Ensure etc/my.cnf exists
       file:
-        path: /root/.my.cnf
+        path: "/etc/my.cnf"
         state: present
-      when: root_password == 'UNSET'
-
-    - name: Create my.cnf
-      copy:
-        content: "{{ lookup('template', 'mysql/my.cnf.erb') }}"
-        dest: "{{ config_file }}"
-        owner: root
-        group: mysql
         mode: '0644'
-      notify:
-        - Restart MySQL Service
+      when: etc_root_password
 
-    - name: Restart MySQL service
+    - name: Restart MySQL service if needed
       service:
         name: "{{ service_name }}"
         state: restarted
-      when: restart | bool
+      when: restart
+
+    - name: Ensure MySQL socket exists
+      file:
+        path: "{{ socket }}"
+        state: socket
+        mode: '0755'

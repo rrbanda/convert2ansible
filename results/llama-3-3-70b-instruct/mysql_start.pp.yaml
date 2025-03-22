@@ -1,22 +1,22 @@
-```yml
+```
 ---
-- name: Create MySQL DB
+- name: Create MySQL Database
   hosts: all
   become: yes
   tasks:
-  - name: Include MySQL server setup
-    include: mysql_server.yml
+  - name: Include MySQL Server
+    include: mysql-server.yml
 
-  - name: Create MySQL database
+  - name: Create Database
     mysql_db:
       name: "{{ name }}"
       state: present
-    when: mysql_db_name is not defined
-    register: mysql_db_name
+    when: mysql_db != "{{ name }}"
+    notify: restart mysql
 
-  - name: Alternative create MySQL database
-    shell:
-      cmd: "mysql -uroot -e 'create database {{ name }}'"
-    when: mysql_db_name is failed
-    become: yes
+  handlers:
+  - name: restart mysql
+    service:
+      name: mysql
+      state: restarted
 ```

@@ -1,18 +1,18 @@
-Here is the Ansible Playbook based on the provided Puppet module:
-
 ```yaml
 ---
-- name: Deploy Rails Webapp
-  hosts: localhost
+- name: Deploy a rails web application
+  hosts: all
+  become: yes
   vars:
+    service_webapp_repo: "{{ get_cloudify_attribute('repo', 'service', 'redmine_puppet', 'webapp') }}"
+    service_webapp_tag: "{{ get_cloudify_attribute('tag', 'service', 'redmine_puppet', 'webapp') }}"
     WEBAPP_PATH: "/opt/webapps/rails"
-    service_webapp_repo: "{{ service_webapp_repo }}"
-    service_webapp_tag: "{{ service_webapp_tag }}"
-    db_user: "{{ get_cloudify_attribute('user', 'service', 'redmine_puppet', 'mysql') }}"
-    db_password: "{{ get_cloudify_attribute('password', 'service', 'redmine_puppet', 'mysql') }}"
-    db_name: "{{ get_cloudify_attribute('db_name', 'service', 'redmine_puppet', 'mysql') }}"
-    db_ip: "{{ get_cloudify_attribute('ip', 'service', 'redmine_puppet', 'mysql') }}"
+
   tasks:
+    - name: Notify about deployment start
+      debug:
+        msg: "Beginning deploy of {{ service_webapp_repo }} version {{ service_webapp_tag }} into {{ WEBAPP_PATH }}"
+
     - name: Install required packages
       apt:
         name:
@@ -22,83 +22,112 @@ Here is the Ansible Playbook based on the provided Puppet module:
           - libxslt-dev
           - libsqlite3-dev
           - libmysqlclient-dev
-          - bundler
+        state: present
 
-    - name: Fetch webapp repo
+    - name: Install bundler
+      gem:
+        name: bundler
+        state: present
+
+    - name: Ensure apache2 is installed
+      apt:
+        name: apache2
+        state: present
+
+    - name: Ensure apache module is enabled
+      apache2_module:
+        name: proxy_http
+        state: present
+
+    - name: Ensure webapp directory exists
+      file:
+        path: "{{ WEBAPP_PATH }}"
+        state: directory
+
+    - name: Clone webapp repo
       git:
         repo: "{{ service_webapp_repo }}"
         dest: "{{ WEBAPP_PATH }}"
+        update: yes
 
-    - name: Checkout specific tag
-      command: git checkout {{ service_webapp_tag }}
-      args:
-        chdir: "{{ WEBAPP_PATH }}"
+    - name: Checkout specified tag
+      git:
+        repo: "{{ service_webapp_repo }}"
+        path: "{{ WEBAPP_PATH }}"
+        version: "{{ service_webapp_tag }}"
 
-    - name: Create Gemfile.local
+    - name: Add unicorn to Gemfile
       copy:
-        content: "gem 'unicorn'"
+        content: "gem 'unicorn'\n"
         dest: "{{ WEBAPP_PATH }}/Gemfile.local"
 
-    - name: Install unicorn gem
+    - name: Install gems
       command: bundle install --without development test rmagick postgresql
       args:
         chdir: "{{ WEBAPP_PATH }}"
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
+      register: bundle_install
 
-    - name: Generate session store
+    - name: Generate secret
       command: bundle exec rake generate_session_store
       args:
         chdir: "{{ WEBAPP_PATH }}"
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
+      when: bundle_install.rc == 0
 
-    - name: Create database.yml file
-      template:
-        src: "database.yml.erb"
-        dest: "{{ WEBAPP_PATH }}/config/database.yml"
+    - name: Set MySQL connection details
+      blockinfile:
+        path: "{{ WEBAPP_PATH }}/config/database.yml"
+        block: |
+          production:
+            <<: *default
+            url: "mysql2://"
+            database: "{{ db_name }}"
+            username: "{{ db_user }}"
+            password: "{{ db_password }}"
+            host: "{{ db_ip }}"
+        create: yes
+        backup: yes
+      vars:
+        db_user: "{{ get_cloudify_attribute('user', 'service', 'redmine_puppet', 'mysql') }}"
+        db_password: "{{ get_cloudify_attribute('password', 'service', 'redmine_puppet', 'mysql') }}"
+        db_name: "{{ get_cloudify_attribute('db_name', 'service', 'redmine_puppet', 'mysql') }}"
+        db_ip: "{{ get_cloudify_attribute('ip', 'service', 'redmine_puppet', 'mysql') }}"
 
-    - name: Run database migrations and load default data
+    - name: Run rake tasks
       command: bundle exec rake db:migrate RAILS_ENV=production && bundle exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=en
       args:
         chdir: "{{ WEBAPP_PATH }}"
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/usr/bin:/usr/local/bin"
+      when: run_rake_tasks.rc == 0
+      register: run_rake_tasks
 
-    - name: Create rails user and directories
+    - name: Create rails user
       user:
-        name: "rails"
-        comment: "rails"
-        groups: "www-data"
-        append: yes
+        name: rails
+        shell: /bin/sh
         home: "{{ WEBAPP_PATH }}"
-        shell: "/bin/sh"
-        require_on: "{{ WEBAPP_PATH }}/files"
+        state: present
 
-    - name: Set permissions for rails directories
+    - name: Set permissions for webapp files
       file:
-        path: "{{ item }}"
-        owner: "rails"
-        group: "www-data"
-        mode: "0755"
-      loop:
-        - "{{ WEBAPP_PATH }}/files"
-        - "{{ WEBAPP_PATH }}/log"
-        - "{{ WEBAPP_PATH }}/tmp"
-        - "{{ WEBAPP_PATH }}/public"
+        path:
+          - "{{ WEBAPP_PATH }}/files"
+          - "{{ WEBAPP_PATH }}/log"
+          - "{{ WEBAPP_PATH }}/tmp"
+          - "{{ WEBAPP_PATH }}/public"
+        owner: rails
+        group: rails
+        mode: '0755'
 
-    - name: Create unicorn upstart job
-      copy:
-        content: |
-          description "unicorn app server"
-          command "/usr/sbin/start-stop-daemon --start -c rails -d {{ WEBAPP_PATH }} --exec /usr/local/bin/bundle -- exec unicorn_rails -E production"
-        dest: "/etc/init/unicorn.conf"
-      notify:
-        - Restart Unicorn
-
-    - name: Reload systemd daemon and start Unicorn
-      command: systemctl daemon-reload
-      changed_when: always
-      notify:
-        - Restart Unicorn
-
-    handlers:
-      - name: Restart Unicorn
-        service:
-          name: unicorn
-          state: restarted
-```
+    - name: Set up unicorn service
+      upstart_job:
+        app_name: unicorn
+        command: start-stop-daemon --start -c rails -d /opt/webapps/rails --exec /usr/local/bin/bundle -- exec unicorn_rails -E production
+        start_secs: 10
+        requires:
+          - bundle_install
+          - "File[{{ WEBAPP_

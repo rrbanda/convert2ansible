@@ -1,103 +1,80 @@
-Here is the equivalent Ansible Playbook for the provided Puppet module:
-
-```yaml
 ---
-- name: Configure MySQL
-  hosts: mysql_servers
+- name: Install and configure MySQL
+  hosts: mysql_target
   vars:
-    root_password: "UNSET"
-    old_root_password: ""
-    bind_address: "{{ mysql_params.bind_address }}"
-    port: "{{ mysql_params.port }}"
-    etc_root_password: "{{ mysql_params.etc_root_password | default(false) }}"
-    service_name: "{{ mysql_params.service_name }}"
-    config_file: "{{ mysql_params.config_file }}"
-    socket: "{{ mysql_params.socket }}"
-    pidfile: "{{ mysql_params.pidfile }}"
-    datadir: "{{ mysql_params.datadir }}"
-    ssl: "{{ mysql_params.ssl | default(false) }}"
-    ssl_ca: "{{ mysql_params.ssl_ca }}"
-    ssl_cert: "{{ mysql_params.ssl_cert }}"
-    ssl_key: "{{ mysql_params.ssl_key }}"
-    log_error: "{{ mysql_params.log_error }}"
-    default_engine: "UNSET"
-    root_group: "{{ mysql_params.root_group | default('') }}"
-    restart: "{{ mysql_params.restart | default(false) }}"
-
+    root_password: 'changeme'
+    bind_address: 0.0.0.0
+    port: 3306
+    datadir: /var/lib/mysql
+    socket: /var/run/mysqld/mysqld.sock
+    pid_file: /var/run/mysqld/mysqld.pid
+    service_name: mysql
+    config_file: /etc/my.cnf
+    root_group: mysql
+    ssl: false
+    ssl_ca: /path/to/ssl_ca
+    ssl_cert: /path/to/ssl_cert
+    ssl_key: /path/to/ssl_key
+    log_error: /var/log/mysql/error.log
+    default_engine: innodb
   tasks:
-    - name: Ensure .my.cnf file is present
-      ansible.builtin.file:
-        path: /root/.my.cnf
-        owner: 'root'
-        group: '{{ root_group }}'
-        mode: '0400'
-        notify:
-          - restart_mysql
-
-    - name: Check SSL parameters if ssl is true
-      assert:
-        that:
-          - not (ssl and ssl_ca is undefined)
-          - not (ssl and ssl_cert is undefined)
-          - not (ssl and ssl_key is undefined)
-
-    - name: Restart MySQL service
-      ansible.builtin.service:
-        name: "{{ service_name }}"
-        state: restarted
-      when: restart | bool
-      register: mysqld_restart
-      changed_when: mysqld_refreshonly | bool
-      failed_when: false
-      tags: [restart]
-
-    - name: Set root password
-      ansible.builtin.command:
-        args:
-          '-u root {{ old_root_password | quote }} password \'{{ root_password }}\''
-        creates: /tmp/mysql-set-password
-        changes: yes
-        fails:
-          - 'mysqladmin -u root {{ root_password | quote }} status > /dev/null'
-      when: root_password != "UNSET"
-      register: set_root_pw
-      until: set_root_pw is succeeded
-      notify:
-        - restart_mysql
-
-    - name: Ensure MySQL directories are present
-      ansible.builtin.file:
-        path:
-          - '/etc/mysql'
-          - '/etc/mysql/conf.d'
+    - name: Ensure MySQL service directory exists
+      file:
+        dest: /etc/mysql
         state: directory
         mode: '0755'
 
-    - name: Manage my.cnf file
+    - name: Ensure MySQL config directory exists
+      file:
+        dest: /etc/mysql/conf.d
+        state: directory
+        mode: '0755'
+
+    - name: Copy and edit MySQL my.cnf config
       template:
-        src: my.cnf.j2
-        dest: "{{ config_file }}"
-        owner: 'root'
-        group: 'root'
-        mode: '0644'
+        src: my.cnf.erb
+        dest: /etc/my.cnf
+      vars:
+        root_password: "{{ root_password }}"
+        bind_address: "{{ bind_address }}"
+        port: "{{ port }}"
+        datadir: "{{ datadir }}"
+        socket: "{{ socket }}"
+        pid_file: "{{ pid_file }}"
+        service_name: "{{ service_name }}"
+        config_file: "{{ config_file }}"
+        log_error: "{{ log_error }}"
+        default_engine: "{{ default_engine }}"
+      notify: Restart MySQL
 
-    - name: Ensure /root/.my.cnf is managed if root_password is set
-      ansible.builtin.file:
-        path: '/root/.my.cnf'
-        content: '{{ lookup("template", "mysql/my.cnf.pass.erb") }}'
-        owner: 'root'
-        group: '{{ root_group }}'
-        mode: '0400'
-      when: root_password != "UNSET" and etc_root_password is not defined
+    - name: Set MySQL root password
+      command: mysqladmin -u root -p'{{ root_password }}' password '{{ root_password }}'
+      register: mysql_rootpw_result
+      changed_when: mysql_rootpw_result.rc != 0
+      when: root_password != 'UNSET'
+      notify: Restart MySQL
 
-    - name: Ensure /etc/my.cnf is managed if etc_root_password is true
-      ansible.builtin.file:
-        path: '/etc/my.cnf'
-        content: '{{ lookup("template", "mysql/my.cnf.pass.erb") }}'
-        owner: 'root'
-        group: 'root'
-        mode: '0644'
-      when: root_password != "UNSET" and etc_root_password
-```
+    - name: Create /root/.my.cnf
+      template:
+        src: my.cnf.pass.erb
+        dest: /root/.my.cnf
+      when: root_password != 'UNSET'
+      notify: Restart MySQL
 
-Please note that the templates (`my.cnf.j2` and `my.cnf.pass.erb`) need to be created according to your requirements, as they are not provided in the Puppet module. Also, ensure that the `mysql_params.yml` file contains all the necessary variables for this playbook to work correctly.
+    - name: Ensure MySQL is installed
+      apt:
+        name: mysql-server
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Ensure MySQL service is running
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+
+    - name: Restart MySQL if necessary
+      service:
+        name: mysql
+        state: restarted
+      when: mysql_rootpw_result is changed

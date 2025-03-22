@@ -1,74 +1,79 @@
 ```yml
 ---
 - name: Configure MySQL
+  hosts: all
   become: yes
   vars:
     root_password: 'changeme'
+    old_root_password: ''
     bind_address: '{{ ansible_default_ipv4.address }}'
     port: 3306
     etc_root_password: true
     service_name: mysql
     config_file: /etc/mysql/my.cnf
     socket: /var/run/mysqld/mysqld.sock
-    pidfile: /var/run/mysqld/mysqld.pid
     datadir: /var/lib/mysql
     ssl: false
-    ssl_ca: 
-    ssl_cert: 
-    ssl_key: 
+    ssl_ca: ''
+    ssl_cert: ''
+    ssl_key: ''
     log_error: /var/log/mysql/error.log
-    default_engine: 
-    root_group: mysql
+    default_engine: ''
+    root_group: root
     restart: true
 
   tasks:
-  - name: Create MySQL directories
+  - name: Ensure MySQL configuration directory exists
     file:
-      path: '{{ item }}'
+      path: /etc/mysql
       state: directory
       mode: '0755'
-    loop:
-      - /etc/mysql
-      - /etc/mysql/conf.d
 
-  - name: Set root password
-    mysql_user:
-      name: root
-      password: '{{ root_password }}'
-      priv: '*.*:ALL,GRANT'
-      state: present
+  - name: Ensure MySQL configuration directory exists
+    file:
+      path: /etc/mysql/conf.d
+      state: directory
+      mode: '0755'
 
   - name: Configure MySQL
     template:
       src: templates/my.cnf.j2
-      dest: '{{ config_file }}'
+      dest: "{{ config_file }}"
       mode: '0644'
     notify: restart mysql
 
-  - name: Create .my.cnf file
+  - name: Set root password
+    mysql_user:
+      name: root
+      password: "{{ root_password }}"
+      login_host: localhost
+      login_user: root
+      login_password: "{{ old_root_password }}"
+    when: root_password is not undefined and root_password != 'UNSET'
+
+  - name: Create .my.cnf file for root user
     template:
       src: templates/my.cnf.pass.j2
       dest: /root/.my.cnf
       mode: '0600'
-    when: root_password is defined
+    when: root_password is not undefined and root_password != 'UNSET'
 
-  - name: Create /etc/my.cnf file
+  - name: Create /etc/my.cnf file if etc_root_password is true
     template:
       src: templates/my.cnf.pass.j2
       dest: /etc/my.cnf
       mode: '0644'
-    when: etc_root_password and root_password is defined
+    when: etc_root_password and root_password is not undefined and root_password != 'UNSET'
 
-  - name: Restart MySQL
+  - name: Restart MySQL service
     service:
-      name: '{{ service_name }}'
+      name: "{{ service_name }}"
       state: restarted
-      enabled: yes
     when: restart
 
   handlers:
   - name: restart mysql
     service:
-      name: '{{ service_name }}'
+      name: "{{ service_name }}"
       state: restarted
 ```

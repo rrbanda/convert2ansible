@@ -1,102 +1,72 @@
-<think>
-Alright, I need to convert the given Puppet module into an Ansible Playbook. Let me start by understanding what the original Puppet code does.
-
-The class `mysql::config` in Puppet seems to handle configuring MySQL settings. It sets the root password, checks SSL configuration, and manages MySQL server settings like port binding and service restarts. There are parameters for various aspects such as root password, bind address, port, etc., and it uses actions to set these configurations.
-
-First, I'll think about how Ansible Playbooks structure tasks. Each task in a playbook corresponds to a resource or action from Puppet. So, the `File` resources become file tasks in Ansible, and the `exec` commands become shell commands in tasks.
-
-Looking at the parameters, they include things like `$root_password`, which is optional unless set to 'UNSET'. The module also handles SSL by requiring certain files when enabled. 
-
-The original Puppet code does several things:
-1. Creates directories for MySQL configuration.
-2. Sets up SSL certificates if needed.
-3. Handles root password changes and notifies a restart of the service.
-4. Manages the my.cnf configuration file.
-
-In Ansible, I'll need to translate each of these into YAML tasks. 
-
-Starting with the file resources:
-- The main config files like `/etc/my.cnf` can be managed using the `copy` module or by writing content directly if using a template.
-- Directories like `/etc/mysql` and `/etc/mysql/conf.d` can be created with `file` or `directory` modules.
-
-Next, the root password handling:
-- The Puppet code checks if `$root_password` is set. If so, it changes the root password using `mysqladmin`, which in Ansible can be done via a shell command.
-- It also ensures that the `/root/.my.cnf` file exists with the new configuration.
-
-SSL Handling:
-- Checks if SSL is enabled and whether the required certificates are present. In Ansible, this can involve conditional checks within tasks or using variables to control the execution flow.
-
-Service Restart:
-- The `exec` action in Puppet restarts the service when needed. In Ansible, I can use the `service` module to restart the MySQL service conditionally.
-
-I'll structure the playbook with a loop for managing each file configuration. For handling root password changes, there will be an if-condition task that only runs if `$root_password` is set and not 'UNSET'. Similarly, SSL-related configurations will be handled in another conditional task.
-
-Using variables from the params class in Puppet can be translated into Ansible inventory or variable files, but since the user didn't provide them, I'll assume they are passed as facts or via a callback.
-
-I also need to ensure that any dependencies, like creating directories before adding files, are handled. So, tasks for creating `/etc/mysql` and its subdirectories come early in the play.
-
-Finally, I'll write the YAML structure with these tasks, ensuring that each resource is properly managed and that any necessary conditions (like SSL being enabled) are checked before applying configurations.
-</think>
-
-```yaml
 ---
-- hosts: all
-  become: mysql_user
-
-  pre_tasks:
-    - name: create-mysql-directories
-      file:
-        path: "{{ item }}"
-        state: directory
-        mode: '0755'
-      loop:
-        - '/etc/mysql'
-        - '/etc/mysql/conf.d'
+- name: Apply MySQL configuration
+  become: yes
+  hosts: db_servers
+  vars:
+    root_password: "your_root_password"
+    old_root_password: "previous_root_password"
+    bind_address: "0.0.0.0"
+    port: "3306"
+    etc_root_password: false
+    service_name: "mysql"
+    config_file: "/etc/mysql/my.cnf"
+    socket: "/var/run/mysqld/mysqld.sock"
+    pidfile: "/var/run/mysqld/mysqld.pid"
+    datadir: "/var/lib/mysql"
+    ssl: false
+    ssl_ca: null
+    ssl_cert: null
+    ssl_key: null
+    log_error: "/var/log/mysql/error.log"
+    default_engine: "InnoDB"
+    root_group: "mysql"
+    restart: true
 
   tasks:
-
-    - name: set-root-password-if-needed
-      action: shell
-      command: |
-        if [ "${root_password}" != "UNSET" ]; then
-          mysqladmin -u root ${old_pw} password '${root_password}'
-        fi
-      when: root_password != 'UNSET'
-      changed_when: true
-
-    - name: create-root-mycnf-file
+    - name: Ensure MySQL configuration file directory exists
       file:
-        path: '/root/.my.cnf'
-        content: |
-          [mysql]
-          {{ template('mysql/my.cnf.pass.erb') }}
-        require: task=set-root-password-if-needed
+        path: /etc/mysql/conf.d
+        state: directory
+        mode: '0755'
 
-    - name: set-etc-mycnf-file-if-needed
+    - name: Ensure /etc/mysql directory exists
       file:
-        path: '/etc/my.cnf'
-        content: |
-          {{ template('mysql/my.cnf.pass.erb') }}
+        path: /etc/mysql
+        state: directory
+        mode: '0755'
+
+    - name: Set mysql root password
+      command: mysqladmin -u root ${{ old_root_password|d('') }} password ${{ root_password }}
+      become: true
+      become_user: root
+      register: set_mysql_rootpw
+      changed_when: set_mysql_rootpw.rc == 0
+      failed_when: set_mysql_rootpw.rc >= 2
+      notify:
+        - Restart MySQL service
+
+    - name: Ensure /root/.my.cnf exists
+      file:
+        path: /root/.my.cnf
+        state: file
+        mode: '0400'
+      when: root_password != "UNSET"
+
+    - name: Ensure /etc/my.cnf exists
+      file:
+        path: /etc/my.cnf
+        state: file
         mode: '0644'
-        when: etc_root_password == true
-        require: task=create-root-mycnf-file
+      when: etc_root_password
 
-  - name: handle-ssl-config
-    action: shell
-    command: |
-      if [ "${ssl}" = "true" ]; then
-        if [ "${ssl_ca}" == "undef" ]; then
-          echo "error: ssl_ca is required when ssl is enabled"
-          exit 1
-        fi
-        # Copy certificates to mysql directory or use template
-        # Assume certificates are in the inventory
-      fi
-    when: ssl == true
+    - name: Ensure MySQL configuration file exists
+      template:
+        src: my.cnf.erb
+        dest: "{{ config_file }}"
+        mode: '0644'
 
-  - name: update-mysql-configuration-file
-    copy:
-      src: "{{ templates_dir }}/mysql/my.cnf.erb"
-      dest: "{{ config_file }}"
-      force: yes
-```
+    - name: Restart MySQL service
+      service:
+        name: "{{ service_name }}"
+        state: restarted
+      when: restart and root_password != "UNSET"

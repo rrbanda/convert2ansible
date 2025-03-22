@@ -1,60 +1,85 @@
-```yaml
 ---
-- name: Install and configure MySQL
-  hosts: mysql_servers
+- hosts: mysql_servers
+  become: yes
   vars:
-    root_password: "changeme"
-    bind_address: "0.0.0.0"
-    port: "3306"
-    ssl: false
-    ssl_ca: ""
-    ssl_cert: ""
-    ssl_key: ""
-    log_error: "/var/log/mysql/error.log"
-    datadir: "/var/lib/mysql"
-    default_engine: "InnoDB"
-    root_group: "mysql"
+    mysql_root_password: 'changeme'
+    mysql_bind_address: '0.0.0.0'
+    mysql_port: '3306'
+    mysql_ssl: false
+    mysql_ssl_ca: '~/.ssl/ca.pem'
+    mysql_ssl_cert: '~/.ssl/cert.pem'
+    mysql_ssl_key: '~/.ssl/key.pem'
+    mysql_datadir: '/var/lib/mysql'
+    mysql_log_error: '/var/log/mysql/error.log'
+    mysql_default_engine: 'InnoDB'
 
   tasks:
-    - name: Ensure MySQL directories exist
+    - name: Ensure mysql package is installed
+      apt:
+        name: mysql-server
+        state: present
+
+    - name: Stop mysql service
+      service:
+        name: mysql
+        state: stopped
+
+    - name: Modify my.cnf
+      copy:
+        dest: /etc/mysql/my.cnf
+        content: |
+          [[mysqld]]
+          bind-address        = {{ mysql_bind_address }}
+          port                = {{ mysql_port }}
+          datadir             = {{ mysql_datadir }}
+          log-error           = {{ mysql_log_error }}
+          default-storage-engine = {{ mysql_default_engine }}
+
+    - name: Secure mysql installation
+      mysql_user:
+        login_user: root
+        login_password: '{{ mysql_root_password }}'
+        name: root
+        password: '{{ mysql_root_password }}'
+        priv: '*'
+      when: mysql_root_password != 'UNSET'
+      notify:
+        - Restart mysql service
+
+    - name: Copy SSL certificates
+      copy:
+        src: files/{{ item }}
+        dest: ~
+        owner: root
+        group: root
+        mode: '0600'
+      with_items:
+        - ca.pem
+        - cert.pem
+        - key.pem
+      when: mysql_ssl
+
+    - name: Add ssl to my.cnf
+      lineinfile:
+        path: /etc/mysql/my.cnf
+        line: '[mysqld]'
+        insertafter: '{{ item.insertafter }}'
+        regex: '{{ item.regex }}'
+        line: 'ssl-ca={{ mysql_ssl_ca }}; ssl-cert={{ mysql_ssl_cert }}; ssl-key={{ mysql_ssl_key }}'
+      loop:
+        - { insertafter: 'bind-address', regex: '^port' }
+      when: mysql_ssl
+
+    - name: Restart mysql service
+      service:
+        name: mysql
+        state: restarted
+
+    - name: Ensure data directory exists
       file:
-        path: "/etc/mysql/conf.d"
+        path: {{ mysql_datadir }}
         state: directory
-        mode: '0755'
-        owner: "root"
-        group: "root"
-        recurse: yes
-
-    - name: Create my.cnf file
-      template:
-        src: "my.cnf.j2"
-        dest: "/etc/mysql/my.cnf"
-        mode: "0644"
-      notify:
-        - Restart MySQL
-
-    - name: Create .my.cnf file for root user
-      template:
-        src: "my.cnf.pass.j2"
-        dest: "/root/.my.cnf"
-        mode: "0400"
-      when: root_password != "UNSET"
-      notify:
-        - Restart MySQL
-
-    - name: Restart MySQL
-      service:
-        name: mysql
-        state: restarted
-      when: root_password != "UNSET"
-
+        owner: mysql
+        group: mysql
+        mode: '0775'
 ...
-
-  handlers:
-    - name: Restart MySQL
-      service:
-        name: mysql
-        state: restarted
-```
-
-This Ansible playbook installs and configures MySQL. It creates necessary directories, applies a my.cnf configuration file, and also sets the root user's password if provided. The MySQL service is restarted if the root password is set. The playbook assumes that templates for 'my.cnf' and '.my.cnf.pass' are available, and the MySQL service is named 'mysql'.

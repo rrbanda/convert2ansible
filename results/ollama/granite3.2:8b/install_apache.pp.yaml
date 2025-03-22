@@ -1,44 +1,28 @@
-```yaml
 ---
-- name: Configure Apache
+- name: Ensure apache is installed and enabled
   hosts: all
-
-  vars:
-    httpd_package:
-      - centos:
-        name: httpd.x86_64
-        state: "{{ installed }}"
-      - redhat:
-        name: httpd.i386
-        state: "{{ installed }}"
-
-    httpd_service:
-      ensure: "{{ ensure }}"
-      enabled: "{{ enable }}"
-
+  become: yes
   tasks:
-    - name: Install HTTPD package
+    - name: Install httpd package
       package:
-        name: "{{ item.name }}"
-        state: "{{ item.state }}"
-      with_items: "{{ httpd_package[operatingsystem] }}"
+        name: httpd
+        state: present
+      when: ansible_architecture == 'x86_64'
+      tags: [package, httpd]
 
-    - name: Configure Apache service
+    - name: Start and enable httpd service
       service:
         name: httpd
-        state: "{{ item.ensure }}"
-        enabled: "{{ item.enabled }}"
-      loop:
-        - { ensure: 'running', enabled: True }
-        - { ensure: 'stopped', enabled: False }
+        state: started
+        enabled: yes
+      tags: [service, httpd]
 
-    - name: Ensure correct Apache configuration file
+    - name: Ensure correct httpd.conf file is present
       copy:
-        dest: "/etc/httpd/conf/httpd.conf"
+        src: httpd.conf
+        dest: /etc/httpd/conf/httpd.conf
         owner: root
         group: root
         mode: 0644
-        backup: yes
-        content: "{{ lookup('file', 'puppet:///modules/apache/httpd.conf') }}"
-      when: apacheconf == 'default'
-```
+      when: ansible_os_family == 'RedHat'
+      tags: [file, httpd.conf]

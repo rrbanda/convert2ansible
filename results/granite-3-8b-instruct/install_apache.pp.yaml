@@ -1,47 +1,39 @@
-```yaml
 ---
-- name: Ensure Apache is installed and running
+- name: Ensure Apache is according to the defined state
   hosts: all
-  become: yes
+  vars:
+    httpd_package: "httpd"
+    httpd_package_arch: "x86_64"
+    httpd_service: "httpd"
+    httpd_conf: "/etc/httpd/conf/httpd.conf"
+
   tasks:
-    - name: Install httpd package
+    - name: Ensure Apache package is present
       package:
-        name: httpd
+        name: "{{ httpd_package }}.{{ httpd_package_arch }}"
         state: present
-      when:
-        - apache_disable|default('false') != 'false'
-        - ansible_facts['os_family'] in ['RedHat', 'CentOS']
-        - ansible_architecture == 'x86_64'
-      tags: [apache]
+      when: apache_disable == 'false'
 
-    - name: Stop and disable Apache service
+    - name: Ensure Apache package is absent
+      package:
+        name: "{{ httpd_package }}.{{ httpd_package_arch }}"
+        state: absent
+      when: apache_disable == 'true'
+
+    - name: Ensure Apache service is managed
       service:
-        name: httpd
-        enabled: no
-        state: stopped
-      when:
-        - apache_disable|default('false') == 'false'
-        - ansible_facts['os_family'] in ['RedHat', 'CentOS']
-        - ansible_architecture == 'x86_64'
-      tags: [apache]
+        name: "{{ httpd_service }}"
+        state: "{{ 'stopped' if apache_disable == 'true' else 'running' }}"
+        enabled: "{{ 'yes' if apache_enable == 'true' else 'no' }}"
+      when: apache_disable != 'true'
 
-    - name: Ensure Apache httpd.conf file is present
-      copy:
-        dest: /etc/httpd/conf/httpd.conf
+    - name: Ensure httpd.conf file exists
+      ansible.builtin.copy:
+        dest: "{{ httpd_conf }}"
         owner: root
         group: root
-        mode: 0644
-        template: puppet:///modules/apache/httpd.conf
-      when:
-        - apache_disable|default('false') != 'false'
-        - ansible_facts['os_family'] in ['RedHat', 'CentOS']
-        - ansible_architecture == 'x86_64'
-      tags: [apache]
-```
-Please note that the above playbook assumes that the `apache` module has two variables: `apache_disable` and `apacheconf`.
+        mode: '0644'
+        content: "{{ lookup('file', 'puppet:///modules/apache/httpd.conf') }}"
+      when: apache_disable == 'false'
 
-`apache_disable` is a boolean variable used to decide if apache should be running or stopped. 
-
-`apacheconf` is a string variable used to decide the source of the httpd configuration file. If it's 'default', it will use the configuration file from within the module.
-
-Also, this playbook uses templates (`template: puppet:///modules/apache/httpd.conf`), you need to create these files in the `templates` directory within `puppet:///modules/apache/httpd.conf` for this playbook to work correctly.
+...

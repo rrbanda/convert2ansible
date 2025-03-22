@@ -1,84 +1,38 @@
-```yaml
----
-- name: cacher-client
-  hosts: all
-  become: true
+- hosts: all
+  become: yes
+  vars:
+    cacher_ipaddress: "{{ cacher.ipaddress }}"
+    cacher_port: "{{ cacher.apt.cacher_port }}"
+    cacher_ssl_support: "{{ cacher.apt.cacher_ssl_support }}"
+    bypass: "{{ node.apt.cache_bypass }}"
+
   tasks:
     - name: Remove proxy from /etc/apt/apt.conf
       command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
-      when: "grep Acquire::http::Proxy /etc/apt/apt.conf"
-      tags:
-         - apt_cacher_ng
+      when: ansible_env.HTTP_PROXY is defined
 
-    - name: Set apt caching server
-      block:
-        - name: Find apt caching server
-          command: apt-config dump | grep 'Cacher-Server:'
-          changed_when: false
-          register: cacher_server
-          when: node['apt']['cacher-client']['restrict_environment'] is defined and node['apt']['cacher-client']['restrict_environment'] == true
-          tags:
-             - apt_cacher_ng
+    - name: Ensure 01proxy file is present
+      template:
+        src: 01proxy.j2
+        dest: /etc/apt/apt.conf.d/01proxy
+        owner: root
+        group: root
+        mode: 00644
+      when: servers | length > 0
+      vars:
+        vars:
+          proxy: "{{ cacher_ipaddress }}"
+          port: "{{ cacher_port }}"
+          proxy_ssl: "{{ cacher_ssl_support | default(false) }}"
+          bypass: "{{ bypass }}"
 
-        - name: Find all servers
-          command: apt-config dump | grep 'Cacher-Server:'
-          register: all_servers
-          when: not node['apt']['cacher-client']['restrict_environment']
-          tags:
-             - apt_cacher_ng
+    - name: Make sure apt-cacher-ng server is configured
+      debug:
+        msg: "apt-cacher-ng server found on {{ servers[0].ipaddress }}."
+      when: servers | length > 0
 
-        - name: Set cacher_ipaddress
-          set_fact:
-            cacher_ipaddress: "{{ item.split(':')[1] }}"
-          loop: "{{ all_servers.stdout_lines }}"
-          when: cacher_server.stdout == ""
-          tags:
-             - apt_cacher_ng
-
-        - name: Add cacher_ipaddress and port to apt_conf
-          template:
-            src: 01proxy.j2
-            dest: /etc/apt/apt.conf.d/01proxy
-            owner: root
-            group: root
-            mode: 0644
-            vars:
-              proxy: "{{ cacher_ipaddress }}"
-              port: "{{ cacher['apt']['cacher_port'] }}"
-              proxy_ssl: "{{ cacher['apt']['cacher_ssl_support'] }}"
-              bypass: "{{ node['apt']['cache_bypass'] }}"
-          notify: "Run apt-get update"
-          tags:
-             - apt_cacher_ng
-          when: servers is defined and servers|length > 0
-
-    - name: Ensure apt is up to date
-      apt:
-        update_cache: yes
-      when: servers is defined and servers|length > 0
-      tags:
-         - apt_cacher_ng
-
-    - name: Ensure apt is up to date
-      apt:
-        update_cache: yes
-      when: servers is defined and servers|length == 0
-      tags:
-         - apt_cacher_ng
-
-    - name: Remove apt_cacher_ng configuration
+    - name: Cleanup 01proxy file
       file:
         path: /etc/apt/apt.conf.d/01proxy
         state: absent
-      when: servers is defined and servers|length == 0
-      tags:
-         - apt_cacher_ng
-
-    - name: Include default apt recipe
-      include_recipe: apt.default
-
-...
-
-```
-
-Please note that the template '01proxy.j2' is assumed to exist and to have the necessary variables for ERB rendering. Also, it is assumed that the role `apt::default` correctly updates the apt cache. This playbook might need adjustments based on the specific use-case and environment.
+      when: servers | length == 0

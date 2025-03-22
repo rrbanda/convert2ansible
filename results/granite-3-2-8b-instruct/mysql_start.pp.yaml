@@ -1,22 +1,32 @@
 ---
 - hosts: all
-  become: true
-  roles:
-    - role: mysql
-
+  become: yes
   tasks:
+    - name: Ensure MySQL server is installed
+      ansible.builtin.yum:
+        name: mysql-server
+        state: present
+      when: ansible_os_family == 'RedHat'
+
+    - name: Ensure MySQL client is installed
+      ansible.builtin.yum:
+        name: mysql
+        state: present
+      when: ansible_os_family == 'RedHat'
+
     - name: Create MySQL database
-      mysql_db:
-        name: "{{ item.name }}"
+      ansible.builtin.mysql_db:
+        name: '{{ item.name }}'
         state: present
       loop:
-        - { name: "{{ mysql_database_name }}" }
-      when: mysql_database_name is defined
+        - {name: '{{ database_name }'}}
+      when: database_name is defined and database_name != ''
 
-    - name: Create database via command (legacy)
-      command: /usr/bin/mysql -uroot -e "create database {{ mysql_database_name }}"
-      become: true
-      become_user: root
-      when: mysql_database_name is defined
+    - name: Create MySQL database if it does not exist
+      ansible.builtin.command: >
+        /usr/bin/mysql -uroot -e "create database {{ item.name }}"
       register: result
       changed_when: result.rc != 0
+      loop:
+        - {name: '{{ database_name }}}'}
+      when: database_name is defined and database_name != ''

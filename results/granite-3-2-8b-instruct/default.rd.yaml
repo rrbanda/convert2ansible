@@ -1,22 +1,142 @@
 ---
-- hosts: all
-  become: true
-  roles:
-    - role: mysql
+- name: Deploy Rails webapp
+  hosts: all
+  become: yes
+  vars:
+    service_webapp_repo: "{{ lookup('env', 'service_webapp_repo') }}"
+    service_webapp_tag: "{{ lookup('env', 'service_webapp_tag') }}"
+    WEBAPP_PATH: "/opt/webapps/rails"
 
   tasks:
-    - name: Create MySQL database
-      mysql_db:
-        name: "{{ item.name }}"
-        state: present
-      loop:
-        - { name: "{{ mysql_database_name }}" }
-      when: mysql_database_name is defined
+    - name: Notify begin deploy
+      debug:
+        msg: "Beginning deploy of {{ service_webapp_repo }} version {{ service_webapp_tag }} into {{ WEBAPP_PATH }}"
+      notify:
+        - beginning_deploy
 
-    - name: Create database via command (legacy)
-      command: /usr/bin/mysql -uroot -e "create database {{ mysql_database_name }}"
-      become: true
+    - name: Ensure required packages
+      apt:
+        name:
+          - rubygems
+          - ruby-dev
+          - libxml2-dev
+          - libxslt-dev
+          - libsqlite3-dev
+          - libmysqlclient-dev
+        state: present
+
+    - name: Install bundler
+      apt:
+        name: bundler
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Ensure webapps directory
+      file:
+        path: "{{ WEBAPP_PATH }}"
+        state: directory
+
+    - name: Clone webapp repository
+      git:
+        repo: "{{ service_webapp_repo }}"
+        dest: "{{ WEBAPP_PATH }}"
+      become: yes
       become_user: root
-      when: mysql_database_name is defined
-      register: result
-      changed_when: result.rc != 0
+      register: clone_result
+      notify:
+        - fetch_webapp_repo
+
+    - name: Checkout specified tag
+      git:
+        repo: "{{ service_webapp_repo }}"
+        dest: "{{ WEBAPP_PATH }}"
+        version: "{{ service_webapp_tag }}"
+      become: yes
+      become_user: root
+      when: clone_result.changed
+
+    - name: Create Gemfile.local
+      copy:
+        dest: "{{ WEBAPP_PATH }}/Gemfile.local"
+        content: "gem 'unicorn'\n"
+      when: clone_result.changed
+
+    - name: Install gems
+      command: bundle install --without development test rmagick postgresql
+      args:
+        chdir: "{{ WEBAPP_PATH }}"
+      become: yes
+      become_user: root
+      register: install_gems
+      changed_when: "'Installing ...' in install_gems.stdout"
+
+    - name: Generate secret token
+      command: bundle exec rake generate_session_store
+      args:
+        chdir: "{{ WEBAPP_PATH }}"
+      become: yes
+      become_user: root
+      when: install_gems.changed
+
+    - name: Configure database.yml
+      template:
+        src: "database.yml.erb"
+        dest: "{{ WEBAPP_PATH }}/config/database.yml"
+      when: install_gems.changed
+
+    - name: Run database migrations and load default data
+      command: bundle exec rake db:migrate RAILS_ENV=production && bundle exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=en
+      args:
+        chdir: "{{ WEBAPP_PATH }}"
+      become: yes
+      become_user: root
+      register: rake_tasks
+      changed_when: "'Migrating ...' in rake_tasks.stdout"
+
+    - name: Create rails user
+      user:
+        name: rails
+        shell: /bin/sh
+        home: "{{ WEBAPP_PATH }}"
+        createhome: yes
+      when: install_gems.changed
+
+    - name: Set permissions
+      file:
+        path: "{{ item }}"
+        owner: rails
+        mode: '0755'
+        state: directory
+      loop:
+        - "{{ WEBAPP_PATH }}/files"
+        - "{{ WEBAPP_PATH }}/log"
+        - "{{ WEBAPP_PATH }}/tmp"
+        - "{{ WEBAPP_PATH }}/public"
+      when: install_gems.changed
+
+    - name: Start Unicorn server
+      upstart_job:
+        name: unicorn
+        description: unicorn app server
+        command: start-stop-daemon --start -c rails -d {{ WEBAPP_PATH }} --exec /usr/local/bin/bundle -- exec unicorn_rails -E production
+        start_on_boot: yes
+        start_immediately: yes
+      when: rake_tasks.changed
+
+    - name: Disable default Apache site
+      command: /usr/sbin/a2dissite default
+      when: install_gems.changed
+
+    - name: Configure Apache VirtualHost
+      apache_vhost:
+        name: webapp
+        template: webapp.erb
+        port: 80
+        docroot: "{{ WEBAPP_PATH }}/public"
+      when: rake_tasks.changed
+
+# Handlers
+- name: beginning_deploy
+  debug:
+    msg: "Starting deployment of rails webapp"
+  listen: "Beginning deploy of {{ service_webapp_repo }} version {{ service_webapp_tag }} into {{ WEBAPP_PATH }}"
