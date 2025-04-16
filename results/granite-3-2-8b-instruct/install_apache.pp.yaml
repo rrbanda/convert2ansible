@@ -1,26 +1,49 @@
-- name: Apache configuration playbook
-  hosts: localhost
+---
+- hosts: all
   tasks:
-    - name: Ensure httpd package is installed or absent based on 'disable' parameter.
-      yum:
-        name: "httpd"
-        state: "{{ installed }}"
-      when: ansible_os_family == "RedHat" and architecture == "x86_64"
-      
-    - name: Ensure httpd service is running or stopped based on 'disable' parameter.
-      systemd:
+    - name: Determine if Apache is installed, enabled and running based on the parameters
+      block:
+        - set_fact:
+            httpd_installed: present
+            httpd_enabled: true
+            httpd_state: started
+          when: disable == "false"
+        - set_fact:
+            httpd_installed: absent
+            httpd_enabled: false
+            httpd_state: stopped
+          when: disable == "true"
+    - name: Install, enable and start the Apache service if it's not disabled
+      yum: 
+        name: httpd.x86_64
+        state: "{{ httpd_installed }}"
+      become: yes
+      when: ansible_os_family == 'RedHat' and ansible_architecture == 'x86_64'
+    - name: Install, enable and start the Apache service if it's not disabled
+      yum: 
+        name: httpd.i386
+        state: "{{ httpd_installed }}"
+      become: yes
+      when: ansible<｜begin▁of▁sentence｜>ily_os_family == 'RedHat' and ansible_architecture != 'x86_64'
+    - name: Ensure Apache is running or not based on the parameters provided
+      service: 
         name: httpd
-        enabled: yes
-        state: "{{ ensure }}"
-        
-- name: Configure httpd
-  hosts: localhost
-  tasks:
-    - name: Copy Apache config file
-      copy:
-        src: "{{ apacheconf }}"
-        dest: "/etc/httpd/conf/httpd.conf"
+        enabled: "{{ httpd_enabled }}"
+        state: "{{ httpd_state }}"
+      become: yes
+    - name: Configure Apache using a specific configuration file if specified, default otherwise
+      copy: 
+        src: puppet:///modules/apache/httpd.conf
+        dest: /etc/httpd/conf/httpd.conf
         owner: root
         group: root
-        mode: '0644'
-      when: ansible_os_family == "RedHat"
+        mode: 0644
+      when: apacheconf == "default"
+    - name: Configure Apache using a specific configuration file if specified, custom otherwise
+      copy: 
+        src: "/etc/ansible/files/{{ apacheconf }}"
+        dest: /etc/httpd/conf/httpd.conf
+        owner: root
+        group: root
+        mode: 0644
+      when: apacheconf != "default"
