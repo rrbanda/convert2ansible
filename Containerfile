@@ -11,7 +11,6 @@ COPY . .
 
 # Add the entrypoint script and make sure it's executable
 COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8080
 
