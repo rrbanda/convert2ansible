@@ -3,21 +3,39 @@
   file:
     path: /etc/mysql
     state: directory
-    mode: '0755'
+    mode: 0755
 
 - name: Ensure /etc/mysql/conf.d directory exists
   file:
     path: /etc/mysql/conf.d
     state: directory
-    mode: '0755'
+    mode: 0755
+
+- name: Ensure /root/.my.cnf file exists
+  file:
+    path: /root/.my.cnf
+    state: touch
+    mode: 0400
+
+- name: Ensure /etc/my.cnf file exists
+  file:
+    path: /etc/my.cnf
+    state: touch
+    mode: 0644
+  when: etc_root_password
 
 - name: Ensure /etc/mysql/my.cnf file exists
   template:
     src: mysql/my.cnf.erb
     dest: /etc/mysql/my.cnf
-    mode: '0644'
+    mode: 0644
+  notify:
+    - Restart mysqld
 
 - name: Ensure /root/.my.cnf file exists
   template:
     src: mysql/my.cnf.pass.erb
     dest: /root/.my.cnf
+    mode: 0400
+  notify:
+    - Restart mysqld

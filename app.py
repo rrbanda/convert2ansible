@@ -1,4 +1,4 @@
-# app.py
+# app.py (Part 1 of N)
 import streamlit as st
 import streamlit.components.v1 as components
 import os
@@ -7,6 +7,10 @@ import logging
 from configparser import ConfigParser
 from time import time
 import urllib.parse
+import shutil
+import tempfile
+import subprocess
+from typing import List
 
 # === Safe logging for OpenShift environments ===
 try:
@@ -19,17 +23,25 @@ logging.basicConfig(filename=logging_path, level=logging.DEBUG, format='%(asctim
 # === Config loading ===
 config = ConfigParser()
 config.read("settings.config")
-
 default_upload_path = config.get("files", "file_location", fallback="uploads")
 default_output_path = config.get("files", "summary_location", fallback="results")
 ollama_host_default = config.get("ollama", "host", fallback="localhost:11434")
 ollama_model_default = config.get("ollama", "model_name", fallback="deepseek-r1:8b")
 default_ai = config.get("general", "ai_to_use", fallback="maas")
 
+# === Init session state ===
+if "clone_status" not in st.session_state: st.session_state.clone_status = ""
+if "cloned_repo_path" not in st.session_state: st.session_state.cloned_repo_path = ""
+if "selected_git_folder" not in st.session_state: st.session_state.selected_git_folder = ""
+if "git_files" not in st.session_state: st.session_state.git_files = []
+if "selected_files" not in st.session_state: st.session_state.selected_files = []
+if "available_tags" not in st.session_state: st.session_state.available_tags = []
+if "filter_tags" not in st.session_state: st.session_state.filter_tags = []
+
 # === UI setup ===
 st.set_page_config(page_title="Convert IaC to Ansible", page_icon="🅰️", layout="wide")
 st.markdown("""
-    <style>
+<style>
     .top-header {
         position: sticky; top: 0; z-index: 1000;
         background-color: #0f0f0f; padding: 10px 0 20px;
@@ -46,32 +58,24 @@ st.markdown("""
         0% { transform: translateX(-100%); }
         100% { transform: translateX(100%); }
     }
-    </style>
-    <div class="top-header">
-        <a href="https://docs.ansible.com" target="_blank">
-            <img src="https://github.com/ansible/logos/blob/main/community-usage/correct-use-white.png?raw=true" alt="Ansible Logo" />
-        </a>
-        <div class="title">Convert Puppet/Chef to Ansible Playbooks</div>
-        <div class="version">v1.0.0</div>
-    </div>
+</style>
+<div class="top-header">
+    <a href="https://docs.ansible.com" target="_blank">
+        <img src="https://github.com/ansible/logos/blob/main/community-usage/correct-use-white.png?raw=true" alt="Ansible Logo" />
+    </a>
+    <div class="title">Convert Puppet/Chef to Ansible Playbooks</div>
+    <div class="version">v1.0.0</div>
+</div>
 """, unsafe_allow_html=True)
+# app.py (Part 2 of N)
 
 # === Sidebar AI Settings ===
 st.sidebar.title("⚙️ Config Gen AI")
-ai_options = {
-    "maas": "🔗 MaaS (Recommended)",
-    "ollama": "💻 Local/Ollama",
-    "wxai": "☁️ Watsonx.ai"
-}
-ai_keys = list(ai_options.keys())
-ai_choice = st.sidebar.radio("Backend", list(ai_options.values()), index=0 if default_ai == "maas" else ai_keys.index(default_ai))
-ai_choice = ai_keys[list(ai_options.values()).index(ai_choice)]  # Map back to internal key
+ai_choice = st.sidebar.radio("Backend", ["maas", "local/ollama", "wxai"], index=0)
 
-
-if ai_choice == "ollama":
+if ai_choice == "local/ollama":
     from ai_modules.ollama_explanator import Ollama
     host = st.sidebar.text_input("Ollama Host", ollama_host_default)
-
     try:
         temp_ollama = Ollama(host=host)
         models = temp_ollama.list_models()
@@ -102,23 +106,85 @@ elif ai_choice == "maas":
 
 summary_path = st.sidebar.text_input("Output Folder", default_output_path)
 
-# === File input ===
-mode = st.radio("Choose File Source", ["Upload Files", "Browse Existing"])
+# === File Input Mode Selector (Only once)
+file_source = st.radio("Choose File Source", ["Upload Files", "Browse Existing", "Git Repo"], key="file_source_radio")
+
+# === Git Repo UI logic
+if file_source == "Git Repo":
+    st.subheader("📦 Git Repository Source")
+    git_url = st.text_input("Git Repository URL")
+    branch = st.text_input("Branch (optional)", value="main")
+    col1, col2 = st.columns([5,1])
+    with col1:
+        pass
+    with col2:
+        if st.button("🔄", help="Clone repo"):
+            with st.spinner("Cloning..."):
+                try:
+                    temp_dir = tempfile.mkdtemp(dir="/tmp")
+                    cmd = ["git", "clone", "--depth", "1"]
+                    if branch: cmd += ["--branch", branch]
+                    cmd += [git_url, temp_dir]
+                    subprocess.check_call(cmd)
+                    st.session_state.cloned_repo_path = temp_dir
+                    st.session_state.clone_status = f"📬 Cloning: {git_url}"
+                except Exception as e:
+                    st.session_state.clone_status = f"❌ Clone failed: {e}"
+    
+    st.markdown("📜 **Clone Status**")
+    st.code(st.session_state.clone_status or "No repo cloned yet.")
+
+
 files_to_process = []
 
-if mode == "Upload Files":
-    uploaded_files = st.file_uploader("Upload `.pp`, `.rb`, `.yml` files", type=["pp", "rb", "yml"], accept_multiple_files=True)
+if file_source == "Upload Files":
+    uploaded_files = st.file_uploader("Upload `.pp`, `.rb`, `.yml` files", type=["pp", "rb", "yml"], accept_multiple_files=True, key="uploaded_files")
     if uploaded_files:
         files_to_process = uploaded_files
-else:
-    folder = st.text_input("Folder to browse", default_upload_path)
+
+elif file_source == "Browse Existing":
+    folder = st.text_input("Folder to browse", default_upload_path, key="browse_existing_path")
     if os.path.exists(folder):
         all_files = [f for f in os.listdir(folder) if f.endswith(('.pp', '.rb', '.yml'))]
-        selected = st.multiselect("Select files", all_files)
+        selected = st.multiselect("Select files", all_files, key="browse_existing_files")
         files_to_process = [os.path.join(folder, f) for f in selected]
 
-# === Main processing ===
-if st.button("🚀 Convert to Ansible", disabled=not files_to_process):
+
+elif file_source == "Git Repo" and st.session_state.get("cloned_repo_path"):
+    repo_root = st.session_state["cloned_repo_path"]
+    full_path = repo_root
+
+    if os.path.exists(full_path):
+        # 🌿 Recursively collect subfolders as tags
+        tag_folders = sorted(set(
+            os.path.relpath(root, full_path)
+            for root, _, _ in os.walk(full_path)
+            if root != full_path
+        ))
+
+        # 🏷️ Folder tag filter (multi-select)
+        selected_tags = st.multiselect("📂 Filter by Folder Tags", tag_folders, key="tag_filter")
+
+        # 👇 Map relative path (for UI) -> full path (for processing)
+        display_to_fullpath = {}
+        for tag in selected_tags:
+            tag_path = os.path.join(full_path, tag)
+            for root, _, files in os.walk(tag_path):
+                for file in files:
+                    if file.endswith(('.pp', '.rb', '.yml')):
+                        abs_path = os.path.join(root, file)
+                        rel_path = os.path.relpath(abs_path, full_path)
+                        display_to_fullpath[rel_path] = abs_path
+
+        if display_to_fullpath:
+            display_names = sorted(display_to_fullpath.keys())
+            selected_display = st.multiselect("📄 Select files to convert", display_names, key="git_selected_files")
+            files_to_process = [display_to_fullpath[name] for name in selected_display]
+        else:
+            st.info("No files found under selected folders.")
+
+# === Main Processing ===
+if st.button("🚀 Convert to Ansible", disabled=not files_to_process, key="convert_btn"):
     os.makedirs(summary_path, exist_ok=True)
     loading_placeholder = st.empty()
     loading_placeholder.markdown('<div class="loading-bar"></div>', unsafe_allow_html=True)
@@ -185,3 +251,27 @@ if st.button("🚀 Convert to Ansible", disabled=not files_to_process):
 
     progress.progress(1.0)
     loading_placeholder.empty()
+ 
+
+# === Cleanup old cloned repos if necessary ===
+def cleanup_old_clones(base_dir="cloned_repos", keep_latest=1):
+    try:
+        if not os.path.exists(base_dir):
+            return
+        all_entries = sorted(
+            [(d, os.path.getmtime(os.path.join(base_dir, d))) for d in os.listdir(base_dir)],
+            key=lambda x: x[1],
+            reverse=True
+        )
+        for d, _ in all_entries[keep_latest:]:
+            full_path = os.path.join(base_dir, d)
+            if os.path.isdir(full_path):
+                shutil.rmtree(full_path)
+                logging.info(f"🧹 Removed old cloned repo: {full_path}")
+    except Exception as e:
+        logging.warning(f"Cleanup failed: {e}")
+
+# Optional: perform cleanup on load or when switching repos
+if "cloned_repo_path" in st.session_state and st.session_state.get("trigger_cleanup", False):
+    cleanup_old_clones()
+    st.session_state["trigger_cleanup"] = False

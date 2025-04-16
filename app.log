@@ -2195,3 +2195,57 @@ IndexError: list index out of range
 2025-04-15 21:59:15,717 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/app.py', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
 2025-04-15 21:59:17,246 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/FETCH_HEAD", inode=114782642, flags=11400, id=287550734): is_file, is_inode_meta_mod, is_modified
 2025-04-15 21:59:17,247 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/FETCH_HEAD', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2025-04-16 10:55:16,250 [DEBUG] connect_tcp.started host='localhost' port=11434 local_address=None timeout=None socket_options=None
+2025-04-16 10:55:16,251 [DEBUG] connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x107294820>
+2025-04-16 10:55:16,251 [DEBUG] send_request_headers.started request=<Request [b'GET']>
+2025-04-16 10:55:16,251 [DEBUG] send_request_headers.complete
+2025-04-16 10:55:16,251 [DEBUG] send_request_body.started request=<Request [b'GET']>
+2025-04-16 10:55:16,251 [DEBUG] send_request_body.complete
+2025-04-16 10:55:16,251 [DEBUG] receive_response_headers.started request=<Request [b'GET']>
+2025-04-16 10:55:16,264 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Content-Type', b'application/json; charset=utf-8'), (b'Date', b'Wed, 16 Apr 2025 14:55:16 GMT'), (b'Transfer-Encoding', b'chunked')])
+2025-04-16 10:55:16,264 [INFO] HTTP Request: GET http://localhost:11434/api/tags "HTTP/1.1 200 OK"
+2025-04-16 10:55:16,264 [DEBUG] receive_response_body.started request=<Request [b'GET']>
+2025-04-16 10:55:16,264 [DEBUG] receive_response_body.complete
+2025-04-16 10:55:16,264 [DEBUG] response_closed.started
+2025-04-16 10:55:16,264 [DEBUG] response_closed.complete
+2025-04-16 10:55:20,997 [DEBUG] connect_tcp.started host='localhost' port=11434 local_address=None timeout=None socket_options=None
+2025-04-16 10:55:20,998 [DEBUG] connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x107295660>
+2025-04-16 10:55:20,998 [DEBUG] send_request_headers.started request=<Request [b'GET']>
+2025-04-16 10:55:20,998 [DEBUG] send_request_headers.complete
+2025-04-16 10:55:20,998 [DEBUG] send_request_body.started request=<Request [b'GET']>
+2025-04-16 10:55:20,998 [DEBUG] send_request_body.complete
+2025-04-16 10:55:20,998 [DEBUG] receive_response_headers.started request=<Request [b'GET']>
+2025-04-16 10:55:21,003 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Content-Type', b'application/json; charset=utf-8'), (b'Date', b'Wed, 16 Apr 2025 14:55:21 GMT'), (b'Transfer-Encoding', b'chunked')])
+2025-04-16 10:55:21,003 [INFO] HTTP Request: GET http://localhost:11434/api/tags "HTTP/1.1 200 OK"
+2025-04-16 10:55:21,003 [DEBUG] receive_response_body.started request=<Request [b'GET']>
+2025-04-16 10:55:21,003 [DEBUG] receive_response_body.complete
+2025-04-16 10:55:21,003 [DEBUG] response_closed.started
+2025-04-16 10:55:21,003 [DEBUG] response_closed.complete
+2025-04-16 10:55:24,818 [DEBUG] connect_tcp.started host='localhost' port=11434 local_address=None timeout=None socket_options=None
+2025-04-16 10:55:24,820 [DEBUG] connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x107296b30>
+2025-04-16 10:55:24,820 [DEBUG] send_request_headers.started request=<Request [b'GET']>
+2025-04-16 10:55:24,820 [DEBUG] send_request_headers.complete
+2025-04-16 10:55:24,820 [DEBUG] send_request_body.started request=<Request [b'GET']>
+2025-04-16 10:55:24,820 [DEBUG] send_request_body.complete
+2025-04-16 10:55:24,820 [DEBUG] receive_response_headers.started request=<Request [b'GET']>
+2025-04-16 10:55:24,826 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Content-Type', b'application/json; charset=utf-8'), (b'Date', b'Wed, 16 Apr 2025 14:55:24 GMT'), (b'Transfer-Encoding', b'chunked')])
+2025-04-16 10:55:24,827 [INFO] HTTP Request: GET http://localhost:11434/api/tags "HTTP/1.1 200 OK"
+2025-04-16 10:55:24,827 [DEBUG] receive_response_body.started request=<Request [b'GET']>
+2025-04-16 10:55:24,827 [DEBUG] receive_response_body.complete
+2025-04-16 10:55:24,827 [DEBUG] response_closed.started
+2025-04-16 10:55:24,827 [DEBUG] response_closed.complete
+2025-04-16 10:55:24,896 [DEBUG] connect_tcp.started host='localhost' port=11434 local_address=None timeout=None socket_options=None
+2025-04-16 10:55:24,901 [DEBUG] connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x1049f7b80>
+2025-04-16 10:55:24,901 [DEBUG] send_request_headers.started request=<Request [b'GET']>
+2025-04-16 10:55:24,902 [DEBUG] send_request_headers.complete
+2025-04-16 10:55:24,902 [DEBUG] send_request_body.started request=<Request [b'GET']>
+2025-04-16 10:55:24,902 [DEBUG] send_request_body.complete
+2025-04-16 10:55:24,902 [DEBUG] receive_response_headers.started request=<Request [b'GET']>
+2025-04-16 10:55:24,909 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Content-Type', b'application/json; charset=utf-8'), (b'Date', b'Wed, 16 Apr 2025 14:55:24 GMT'), (b'Transfer-Encoding', b'chunked')])
+2025-04-16 10:55:24,910 [INFO] HTTP Request: GET http://localhost:11434/api/tags "HTTP/1.1 200 OK"
+2025-04-16 10:55:24,910 [DEBUG] receive_response_body.started request=<Request [b'GET']>
+2025-04-16 10:55:24,911 [DEBUG] receive_response_body.complete
+2025-04-16 10:55:24,911 [DEBUG] response_closed.started
+2025-04-16 10:55:24,911 [DEBUG] response_closed.complete
+2025-04-16 10:56:00,132 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/app.py", inode=114800806, flags=11400, id=288920268): is_file, is_inode_meta_mod, is_modified
+2025-04-16 10:56:00,133 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/app.py', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)

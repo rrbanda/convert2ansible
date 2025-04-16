@@ -1,0 +1,87 @@
+---
+- name: Deploy Rails webapp
+  hosts: localhost
+  gather_facts: no
+  
+  vars:
+    WEBAPP_PATH: "/opt/webapps/rails"
+    db_user: "{{ lookup('cloudify_attribute', 'service.redmine_puppet.mysql.user') }}"
+    db_password: "{{ lookup('cloudify_attribute', 'service.redmine_puppet.mysql.password') }}"
+    db_name: "{{ lookup('cloudify_attribute', 'service.redmine_puppet.mysql.db_name') }}"
+    db_ip: "{{ lookup('cloudify_attribute', 'service.redmine_puppet.mysql.ip') }}"
+  
+  tasks:
+  
+  - name: Beginning deploy of {{ service_webapp_repo }} version {{ service_webapp_tag }} into {{ WEBAPP_PATH }}
+    debug:
+      msg: "Beginning deploy of {{ service_webapp_repo }} version {{ service_webapp_tag }} into {{ WEBAPP_PATH }}"
+  
+  - name: Ensure required packages are installed
+    apt:
+      name: ["{{ item }}"]
+      state: present
+    with_items: 
+      - rubygems
+      - ruby-dev
+      - libxml2-dev
+      - libxslt-dev
+      - libsqlite3-dev
+      - libmysqlclient-dev
+  
+  - name: Ensure apache and proxy_http module is installed
+    apt:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - apache2
+      - libapache2-mod-proxy-http
+      
+  - name: Ensure webapps directory exists
+    file:
+      path: "/opt/webapps"
+      state: directory
+  
+  - name: Fetch the git repository
+    git:
+      repo: "{{ service_webapp_repo }}"
+      dest: "{{ WEBAPP_PATH }}"
+      clone: yes
+      update: no
+    notify:
+      - Fetch webapp tag
+  
+  - name: Checkout the specific version of the git repository
+    command: "git checkout {{ service_webapp_tag }}"
+    args:
+      chdir: "{{ WEBAPP_PATH }}"
+    when: service_webapp_tag is defined
+    notify:
+      - Generate secret
+  
+  - name: Ensure rails user exists
+    user:
+      name: rails
+      comment: rails
+      home: "{{ WEBAPP_PATH }}"
+      shell: /bin/sh
+      system: no
+    notify:
+      - Set up file and directory permissions
+  
+  - name: Set up Unicorn server
+    copy:
+      src: unicorn.conf.erb
+      dest: "{{ WEBAPP_PATH }}/unicorn.conf"
+    notify:
+      - Start unicorn service
+      
+  - name: Disable default apache vhost
+    command: "/usr/sbin/a2dissite default"
+    when: ansible_os_family == "Debian"
+  
+  - name: Set up Apache VHost
+    template:
+      src: webapp.erb
+      dest: /etc/apache2/sites-available/webapp.conf
+    notify:
+      - Restart apache service

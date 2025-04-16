@@ -1,0 +1,53 @@
+---
+- name: Remove proxy from /etc/apt/apt.conf
+  command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
+  when: grep Acquire::http::Proxy /etc/apt/apt.conf
+  tags:
+    - apt
+    - cacher-client
+
+- name: apt-get update
+  command: apt-get update
+  tags:
+    - apt
+    - update
+
+- name: Install apt-transport-https
+  apt:
+    name: apt-transport-https
+    state: present
+  tags:
+    - apt
+    - transport-https
+
+- name: Install ca-certificates
+  apt:
+    name: ca-certificates
+    state: present
+  tags:
+    - apt
+    - ca-certificates
+
+- name: Install curl
+  apt:
+    name: curl
+    state: present
+  tags:
+    - apt
+    - curl
+
+- name: Install gnupg2
+  apt:
+    name: gnupg2
+    state: present
+  tags:
+    - apt
+    - gnupg2
+
+- name: Install software-properties-common
+  apt:
+    name: software-properties-common
+    state: present
+  tags:
+    - apt
+    - software-properties-common

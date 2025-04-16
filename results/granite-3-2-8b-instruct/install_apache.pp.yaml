@@ -1,0 +1,23 @@
+---
+- name: Apache configuration playbook
+  hosts: all
+  tasks:
+    - name: Configure httpd based on operating system and architecture
+      ansible.builtin.package:
+        name: "{{ 'httpd.x86_64' if arch == 'x86_64' else 'httpd.i386' }}"
+        state: "{{ 'present' if not disable else 'absent' }}"
+      when: ansible_os_family in ['RedHat', 'CentOS']
+    - name: Configure httpd service based on operating system and architecture
+      ansible.builtin.service:
+        name: httpd
+        state: "{{ 'running' if not disable else 'stopped' }}"
+        enabled: "{{ not disable }}"
+      when: ansible<｜begin▁of▁sentence｜>.builtin.package in ['RedHat', 'CentOS']
+    - name: Configure httpd conf based on operating system and architecture
+      ansible.builtin.copy:
+        src: "{{ apacheconf if apacheconf == 'default' else '' }}"
+        dest: /etc/httpd/conf/httpd.conf
+        owner: root
+        group: root
+        mode: 0644
+      when: ansible_os_family in ['RedHat', 'CentOS']

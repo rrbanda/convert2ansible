@@ -1,5 +1,9 @@
 - name: Create MySQL database
-  mysql_db:
-    name: "{{ item }}"
-    state: present
-  with_items: "{{ db_names }}"
+  hosts: localhost
+  gather_facts: no
+  
+  tasks:
+    - name: Execute command to create a database
+      command: /usr/bin/mysql -uroot -e "create database {{ name }}"
+      args:
+        removes: "/usr/bin/mysql  -uroot {{ name }}"
