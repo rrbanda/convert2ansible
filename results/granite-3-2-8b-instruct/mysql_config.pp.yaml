@@ -1,16 +1,23 @@
 ---
-- name: Configure MySQL
-  hosts: localhost
-  vars_files:
-    - vars/main.yml
-  tasks:
-    - name: Ensure directories exist
-      file:
-        path: "{{ item }}"
-        state: directory
-        mode: '0755'
-      with_items:
-        - /etc/mysql
-        - /etc/mysql/conf.d
- 
-- include: tasks/main.yml
+- name: Ensure /etc/mysql directory exists
+  file:
+    path: /etc/mysql
+    state: directory
+    mode: '0755'
+
+- name: Ensure /etc/mysql/conf.d directory exists
+  file:
+    path: /etc/mysql/conf.d
+    state: directory
+    mode: '0755'
+
+- name: Ensure /etc/mysql/my.cnf file exists
+  template:
+    src: mysql/my.cnf.erb
+    dest: /etc/mysql/my.cnf
+    mode: '0644'
+
+- name: Ensure /root/.my.cnf file exists
+  template:
+    src: mysql/my.cnf.pass.erb
+    dest: /root/.my.cnf

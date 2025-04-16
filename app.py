@@ -58,7 +58,15 @@ st.markdown("""
 
 # === Sidebar AI Settings ===
 st.sidebar.title("⚙️ Config Gen AI")
-ai_choice = st.sidebar.radio("Backend", ["ollama", "wxai", "maas"], index=2 if default_ai == "maas" else 0)
+ai_options = {
+    "maas": "🔗 MaaS (Recommended)",
+    "ollama": "💻 Local/Ollama",
+    "wxai": "☁️ Watsonx.ai"
+}
+ai_keys = list(ai_options.keys())
+ai_choice = st.sidebar.radio("Backend", list(ai_options.values()), index=0 if default_ai == "maas" else ai_keys.index(default_ai))
+ai_choice = ai_keys[list(ai_options.values()).index(ai_choice)]  # Map back to internal key
+
 
 if ai_choice == "ollama":
     from ai_modules.ollama_explanator import Ollama
