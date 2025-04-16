@@ -1,28 +1,83 @@
 ---
-- name: Ensure /etc/mysql directory exists
-  file:
-    path: /etc/mysql
-    state: directory
-    mode: '0755'
+- name: Set mysql root password
+  mysql_user:
+    name: root
+    password: "{{ root_password }}"
+    login_unix_socket: "{{ socket }}"
+  when: root_password != 'UNSET'
 
-- name: Ensure /etc/mysql/conf.d directory exists
-  file:
-    path: /etc/mysql/conf.d
-    state: directory
-    mode: '0755'
+- name: Set mysql bind address
+  lineinfile:
+    dest: "{{ config_file }}"
+    regexp: '^bind-address'
+    line: "bind-address = {{ bind_address }}"
+  notify: restart mysql
 
-- name: Ensure /etc/mysql/my.cnf file exists
-  template:
-    src: mysql/my.cnf.erb
-    dest: /etc/mysql/my.cnf
-    mode: '0644'
+- name: Set mysql port
+  lineinfile:
+    dest: "{{ config_file }}"
+    regexp: '^port'
+    line: "port = {{ port }}"
+  notify: restart mysql
 
-- name: Ensure /root/.my.cnf file exists
-  template:
-    src: mysql/my.cnf.pass.erb
-    dest: /root/.my.cnf
+- name: Set mysql datadir
+  lineinfile:
+    dest: "{{ config_file }}"
+    regexp: '^datadir'
+    line: "datadir = {{ datadir }}"
+  notify: restart mysql
 
-- name: Restart MySQL service
+- name: Set mysql ssl
+  lineinfile:
+    dest: "{{ config_file }}"
+    regexp: '^ssl'
+    line: "ssl = {{ ssl }}"
+  notify: restart mysql
+
+- name: Set mysql ssl_ca
+  lineinfile:
+    dest: "{{ config_file }}"
+    regexp: '^ssl-ca'
+    line: "ssl-ca = {{ ssl_ca }}"
+  notify: restart mysql
+
+- name: Set mysql ssl_cert
+  lineinfile:
+    dest: "{{ config_file }}"
+    regexp: '^ssl-cert'
+    line: "ssl-cert = {{ ssl_cert }}"
+  notify: restart mysql
+
+- name: Set mysql ssl_key
+  lineinfile:
+    dest: "{{ config_file }}"
+    regexp: '^ssl-key'
+    line: "ssl-key = {{ ssl_key }}"
+  notify: restart mysql
+
+- name: Set mysql log_error
+  lineinfile:
+    dest: "{{ config_file }}"
+    regexp: '^log-error'
+    line: "log-error = {{ log_error }}"
+  notify: restart mysql
+
+- name: Set mysql default_engine
+  lineinfile:
+    dest: "{{ config_file }}"
+    regexp: '^default-storage-engine'
+    line: "default-storage-engine = {{ default_engine }}"
+  notify: restart mysql
+
+- name: Set mysql root group
+  lineinfile:
+    dest: "{{ config_file }}"
+    regexp: '^mysqld_safe_user'
+    line: "mysqld_safe_user = {{ root_group }}"
+  notify: restart mysql
+
+- name: Restart mysql
   service:
-    name: mysql
+    name: "{{ service_name }}"
     state: restarted
+  when: restart

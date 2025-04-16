@@ -6,9 +6,17 @@ import logging
 from configparser import ConfigParser
 from time import time
 import urllib.parse
+from logging.handlers import RotatingFileHandler
 
 # === Logging ===
-logging.basicConfig(filename='app.log', level=logging.DEBUG, format='%(asctime)s [%(levelname)s] %(message)s')
+LOG_PATH = "/tmp/app.log"
+os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
+handler = RotatingFileHandler(LOG_PATH, maxBytes=1_000_000, backupCount=3)
+logging.basicConfig(
+    handlers=[handler],
+    level=logging.DEBUG,
+    format='%(asctime)s [%(levelname)s] %(message)s'
+)
 
 # === Load settings ===
 config = ConfigParser()
