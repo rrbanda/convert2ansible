@@ -8,7 +8,7 @@ from time import time
 import urllib.parse
 from logging.handlers import RotatingFileHandler
 
-# === Logging ===
+# === Logging added===
 LOG_PATH = "/tmp/app.log"
 os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
 handler = RotatingFileHandler(LOG_PATH, maxBytes=1_000_000, backupCount=3)
