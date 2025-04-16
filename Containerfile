@@ -9,13 +9,17 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 COPY . .
 
-# Expose default Streamlit port
-EXPOSE 8501
+# Expose OpenShift-friendly port
+EXPOSE 8080
 
+# Set Streamlit config for OpenShift
 ENV STREAMLIT_SERVER_HEADLESS=true
 ENV STREAMLIT_SERVER_ENABLECORS=false
+ENV STREAMLIT_SERVER_PORT=8080
 ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
 
+# Use OpenShift-compatible UID
 USER 1001
 
-CMD ["streamlit", "run", "app.py"]
+# ✅ Explicitly set port
+CMD ["streamlit", "run", "app.py", "--server.port=8080", "--server.address=0.0.0.0"]

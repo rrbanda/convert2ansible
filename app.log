@@ -1904,3 +1904,160 @@ IndexError: list index out of range
 2025-04-15 21:37:00,553 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/Containerfile', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
 2025-04-15 21:37:17,625 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/Containerfile", inode=114848682, flags=11400, id=287450797): is_file, is_inode_meta_mod, is_modified
 2025-04-15 21:37:17,625 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/Containerfile', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,186 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/cd/b0fbb9ed2e43ca85639f8aad212bb7e19cb784", inode=114861517, flags=110100, id=287451586): is_created, is_file, is_hardlink
+2025-04-15 21:37:30,186 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/cd", inode=114861516, flags=20500, id=287451589): is_created, is_directory, is_inode_meta_mod
+2025-04-15 21:37:30,186 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/cd/tmp_obj_Sm65jW", inode=114861517, flags=111300, id=287451592): is_coalesced, is_created, is_file, is_hardlink, is_modified, is_removed
+2025-04-15 21:37:30,186 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/b9/9d5d1785f0dd31f3babb3ce42c76d190070041", inode=114861521, flags=110100, id=287451604): is_created, is_file, is_hardlink
+2025-04-15 21:37:30,186 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/b9", inode=114861520, flags=20500, id=287451607): is_created, is_directory, is_inode_meta_mod
+2025-04-15 21:37:30,186 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/b9/tmp_obj_2biO3R", inode=114861521, flags=111300, id=287451610): is_coalesced, is_created, is_file, is_hardlink, is_modified, is_removed
+2025-04-15 21:37:30,186 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/index.lock", inode=114861515, flags=11900, id=287451616): is_coalesced, is_created, is_file, is_modified, is_renamed
+2025-04-15 21:37:30,186 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/index", inode=114861515, flags=10800, id=287451617): is_file, is_renamed
+2025-04-15 21:37:30,186 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/index", inode=114857571, flags=10800, id=287451618): is_file, is_renamed
+2025-04-15 21:37:30,186 [DEBUG] queue_event FileCreatedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/cd/b0fbb9ed2e43ca85639f8aad212bb7e19cb784', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,186 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/cd', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,186 [DEBUG] queue_event DirCreatedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/cd', dest_path='', event_type='created', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,187 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,187 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/cd', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,187 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/cd/tmp_obj_Sm65jW', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,187 [DEBUG] queue_event FileDeletedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/cd/tmp_obj_Sm65jW', dest_path='', event_type='deleted', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,187 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/cd', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,187 [DEBUG] queue_event FileCreatedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/b9/9d5d1785f0dd31f3babb3ce42c76d190070041', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,187 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/b9', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,187 [DEBUG] queue_event DirCreatedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/b9', dest_path='', event_type='created', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,187 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,187 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/b9', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,187 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/b9/tmp_obj_2biO3R', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,187 [DEBUG] queue_event FileDeletedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/b9/tmp_obj_2biO3R', dest_path='', event_type='deleted', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,187 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/b9', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,187 [DEBUG] queue_event FileCreatedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/index.lock', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,187 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,187 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/index.lock', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,187 [DEBUG] Destination event for rename is NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/index", inode=114861515, flags=10800, id=287451617)
+2025-04-15 21:37:30,187 [DEBUG] queue_event FileMovedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/index.lock', dest_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/index', event_type='moved', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,188 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,188 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,188 [DEBUG] queue_event FileDeletedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/index', dest_path='', event_type='deleted', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,188 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,197 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/15/982a3ad5124a7b1f6829399417b80d5c5b9735", inode=114861526, flags=110100, id=287451633): is_created, is_file, is_hardlink
+2025-04-15 21:37:30,197 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/15", inode=114861525, flags=20500, id=287451636): is_created, is_directory, is_inode_meta_mod
+2025-04-15 21:37:30,197 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/15/tmp_obj_TOEC7d", inode=114861526, flags=111300, id=287451639): is_coalesced, is_created, is_file, is_hardlink, is_modified, is_removed
+2025-04-15 21:37:30,197 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/index.lock", inode=114861524, flags=11900, id=287451645): is_coalesced, is_created, is_file, is_modified, is_renamed
+2025-04-15 21:37:30,197 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/index", inode=114861524, flags=10800, id=287451646): is_file, is_renamed
+2025-04-15 21:37:30,197 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/index", inode=114861515, flags=10800, id=287451647): is_file, is_renamed
+2025-04-15 21:37:30,197 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/COMMIT_EDITMSG", inode=114857588, flags=11400, id=287451653): is_file, is_inode_meta_mod, is_modified
+2025-04-15 21:37:30,197 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/dc/23192c5196918ca310992bd2d964e81ac32dfd", inode=114861530, flags=110100, id=287451665): is_created, is_file, is_hardlink
+2025-04-15 21:37:30,197 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/dc", inode=114861529, flags=20500, id=287451668): is_created, is_directory, is_inode_meta_mod
+2025-04-15 21:37:30,197 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/dc/tmp_obj_pFx0KJ", inode=114861530, flags=111300, id=287451671): is_coalesced, is_created, is_file, is_hardlink, is_modified, is_removed
+2025-04-15 21:37:30,197 [DEBUG] queue_event FileCreatedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/15/982a3ad5124a7b1f6829399417b80d5c5b9735', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,197 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/15', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,197 [DEBUG] queue_event DirCreatedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/15', dest_path='', event_type='created', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,197 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,197 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/15', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,197 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/15/tmp_obj_TOEC7d', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,197 [DEBUG] queue_event FileDeletedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/15/tmp_obj_TOEC7d', dest_path='', event_type='deleted', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,197 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/15', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,197 [DEBUG] queue_event FileCreatedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/index.lock', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,197 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,198 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/index.lock', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,198 [DEBUG] Destination event for rename is NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/index", inode=114861524, flags=10800, id=287451646)
+2025-04-15 21:37:30,198 [DEBUG] queue_event FileMovedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/index.lock', dest_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/index', event_type='moved', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,198 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,198 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,198 [DEBUG] queue_event FileDeletedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/index', dest_path='', event_type='deleted', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,198 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,198 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/COMMIT_EDITMSG', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,198 [DEBUG] queue_event FileCreatedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/dc/23192c5196918ca310992bd2d964e81ac32dfd', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,198 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/dc', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,198 [DEBUG] queue_event DirCreatedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/dc', dest_path='', event_type='created', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,198 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,198 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/dc', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,198 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/dc/tmp_obj_pFx0KJ', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,198 [DEBUG] queue_event FileDeletedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/dc/tmp_obj_pFx0KJ', dest_path='', event_type='deleted', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,198 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/dc', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,206 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/logs/HEAD", inode=114782352, flags=11000, id=287451683): is_file, is_modified
+2025-04-15 21:37:30,207 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/logs/refs/heads/main", inode=114782354, flags=11000, id=287451686): is_file, is_modified
+2025-04-15 21:37:30,207 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/heads/main.lock", inode=114861534, flags=11900, id=287451689): is_coalesced, is_created, is_file, is_modified, is_renamed
+2025-04-15 21:37:30,207 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/heads/main", inode=114861534, flags=10800, id=287451690): is_file, is_renamed
+2025-04-15 21:37:30,207 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/heads/main", inode=114857594, flags=10800, id=287451691): is_file, is_renamed
+2025-04-15 21:37:30,207 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/HEAD.lock", inode=114861533, flags=10300, id=287451694): is_coalesced, is_created, is_file, is_removed
+2025-04-15 21:37:30,207 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/AUTO_MERGE.lock", inode=114861535, flags=10300, id=287451703): is_coalesced, is_created, is_file, is_removed
+2025-04-15 21:37:30,207 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/packed-refs.lock", inode=114861536, flags=10300, id=287451706): is_coalesced, is_created, is_file, is_removed
+2025-04-15 21:37:30,207 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/logs/HEAD', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,207 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/logs/refs/heads/main', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,207 [DEBUG] queue_event FileCreatedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/heads/main.lock', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,207 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/heads', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,207 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/heads/main.lock', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,207 [DEBUG] Destination event for rename is NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/heads/main", inode=114861534, flags=10800, id=287451690)
+2025-04-15 21:37:30,207 [DEBUG] queue_event FileMovedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/heads/main.lock', dest_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/heads/main', event_type='moved', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,207 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/heads', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,207 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/heads', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,207 [DEBUG] queue_event FileDeletedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/heads/main', dest_path='', event_type='deleted', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,207 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/heads', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,207 [DEBUG] queue_event FileCreatedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/HEAD.lock', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,207 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,207 [DEBUG] queue_event FileDeletedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/HEAD.lock', dest_path='', event_type='deleted', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,207 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,207 [DEBUG] queue_event FileCreatedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/AUTO_MERGE.lock', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,207 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,207 [DEBUG] queue_event FileDeletedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/AUTO_MERGE.lock', dest_path='', event_type='deleted', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,208 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,208 [DEBUG] queue_event FileCreatedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/packed-refs.lock', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,208 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,208 [DEBUG] queue_event FileDeletedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/packed-refs.lock', dest_path='', event_type='deleted', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,208 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,216 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/maintenance.lock", inode=114861537, flags=10300, id=287451712): is_coalesced, is_created, is_file, is_removed
+2025-04-15 21:37:30,216 [DEBUG] queue_event FileCreatedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/maintenance.lock', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,217 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:30,217 [DEBUG] queue_event FileDeletedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/maintenance.lock', dest_path='', event_type='deleted', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:30,217 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:31,263 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/logs/refs/remotes/origin/main", inode=114857610, flags=11000, id=287451854): is_file, is_modified
+2025-04-15 21:37:31,263 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/remotes/origin/main.lock", inode=114861547, flags=11900, id=287451857): is_coalesced, is_created, is_file, is_modified, is_renamed
+2025-04-15 21:37:31,263 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/remotes/origin/main", inode=114861547, flags=10800, id=287451858): is_file, is_renamed
+2025-04-15 21:37:31,263 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/remotes/origin/main", inode=114857609, flags=10800, id=287451859): is_file, is_renamed
+2025-04-15 21:37:31,264 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/logs/refs/remotes/origin/main', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:31,264 [DEBUG] queue_event FileCreatedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/remotes/origin/main.lock', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:31,264 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/remotes/origin', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:31,264 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/remotes/origin/main.lock', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:31,264 [DEBUG] Destination event for rename is NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/remotes/origin/main", inode=114861547, flags=10800, id=287451858)
+2025-04-15 21:37:31,264 [DEBUG] queue_event FileMovedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/remotes/origin/main.lock', dest_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/remotes/origin/main', event_type='moved', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:31,264 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/remotes/origin', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:31,264 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/remotes/origin', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:37:31,265 [DEBUG] queue_event FileDeletedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/remotes/origin/main', dest_path='', event_type='deleted', is_directory=False, is_synthetic=False)
+2025-04-15 21:37:31,265 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/refs/remotes/origin', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:38:27,598 [DEBUG] connect_tcp.started host='localhost' port=11434 local_address=None timeout=None socket_options=None
+2025-04-15 21:38:27,599 [DEBUG] connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x119e3e590>
+2025-04-15 21:38:27,599 [DEBUG] send_request_headers.started request=<Request [b'GET']>
+2025-04-15 21:38:27,599 [DEBUG] send_request_headers.complete
+2025-04-15 21:38:27,599 [DEBUG] send_request_body.started request=<Request [b'GET']>
+2025-04-15 21:38:27,600 [DEBUG] send_request_body.complete
+2025-04-15 21:38:27,600 [DEBUG] receive_response_headers.started request=<Request [b'GET']>
+2025-04-15 21:38:27,609 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Content-Type', b'application/json; charset=utf-8'), (b'Date', b'Wed, 16 Apr 2025 01:38:27 GMT'), (b'Transfer-Encoding', b'chunked')])
+2025-04-15 21:38:27,609 [INFO] HTTP Request: GET http://localhost:11434/api/tags "HTTP/1.1 200 OK"
+2025-04-15 21:38:27,609 [DEBUG] receive_response_body.started request=<Request [b'GET']>
+2025-04-15 21:38:27,609 [DEBUG] receive_response_body.complete
+2025-04-15 21:38:27,609 [DEBUG] response_closed.started
+2025-04-15 21:38:27,609 [DEBUG] response_closed.complete
+2025-04-15 21:41:07,253 [DEBUG] connect_tcp.started host='localhost' port=11434 local_address=None timeout=None socket_options=None
+2025-04-15 21:41:07,254 [DEBUG] connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x119e3e440>
+2025-04-15 21:41:07,254 [DEBUG] send_request_headers.started request=<Request [b'GET']>
+2025-04-15 21:41:07,254 [DEBUG] send_request_headers.complete
+2025-04-15 21:41:07,255 [DEBUG] send_request_body.started request=<Request [b'GET']>
+2025-04-15 21:41:07,255 [DEBUG] send_request_body.complete
+2025-04-15 21:41:07,255 [DEBUG] receive_response_headers.started request=<Request [b'GET']>
+2025-04-15 21:41:07,260 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Content-Type', b'application/json; charset=utf-8'), (b'Date', b'Wed, 16 Apr 2025 01:41:07 GMT'), (b'Transfer-Encoding', b'chunked')])
+2025-04-15 21:41:07,261 [INFO] HTTP Request: GET http://localhost:11434/api/tags "HTTP/1.1 200 OK"
+2025-04-15 21:41:07,261 [DEBUG] receive_response_body.started request=<Request [b'GET']>
+2025-04-15 21:41:07,261 [DEBUG] receive_response_body.complete
+2025-04-15 21:41:07,261 [DEBUG] response_closed.started
+2025-04-15 21:41:07,261 [DEBUG] response_closed.complete
+2025-04-15 21:45:05,665 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/FETCH_HEAD", inode=114782642, flags=11400, id=287500436): is_file, is_inode_meta_mod, is_modified
+2025-04-15 21:45:05,666 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/FETCH_HEAD', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2025-04-15 21:45:07,667 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/FETCH_HEAD", inode=114782642, flags=11400, id=287500764): is_file, is_inode_meta_mod, is_modified
+2025-04-15 21:45:07,668 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/FETCH_HEAD', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
+2025-04-15 21:45:07,685 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/maintenance.lock", inode=114864487, flags=10300, id=287500770): is_coalesced, is_created, is_file, is_removed
+2025-04-15 21:45:07,685 [DEBUG] queue_event FileCreatedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/maintenance.lock', dest_path='', event_type='created', is_directory=False, is_synthetic=False)
+2025-04-15 21:45:07,685 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:45:07,685 [DEBUG] queue_event FileDeletedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects/maintenance.lock', dest_path='', event_type='deleted', is_directory=False, is_synthetic=False)
+2025-04-15 21:45:07,685 [DEBUG] queue_event DirModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/.git/objects', dest_path='', event_type='modified', is_directory=True, is_synthetic=False)
+2025-04-15 21:45:08,550 [DEBUG] NativeEvent(path="/Users/raghurambanda/Automation-Code-SorcererX/Containerfile", inode=114848682, flags=11400, id=287500776): is_file, is_inode_meta_mod, is_modified
+2025-04-15 21:45:08,550 [DEBUG] queue_event FileModifiedEvent(src_path='/Users/raghurambanda/Automation-Code-SorcererX/Containerfile', dest_path='', event_type='modified', is_directory=False, is_synthetic=False)
