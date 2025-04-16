@@ -1,32 +1,5 @@
----
-- hosts: all
-  become: yes
-  tasks:
-    - name: Ensure MySQL server is installed
-      ansible.builtin.yum:
-        name: mysql-server
-        state: present
-      when: ansible_os_family == 'RedHat'
-
-    - name: Ensure MySQL client is installed
-      ansible.builtin.yum:
-        name: mysql
-        state: present
-      when: ansible_os_family == 'RedHat'
-
-    - name: Create MySQL database
-      ansible.builtin.mysql_db:
-        name: '{{ item.name }}'
-        state: present
-      loop:
-        - {name: '{{ database_name }'}}
-      when: database_name is defined and database_name != ''
-
-    - name: Create MySQL database if it does not exist
-      ansible.builtin.command: >
-        /usr/bin/mysql -uroot -e "create database {{ item.name }}"
-      register: result
-      changed_when: result.rc != 0
-      loop:
-        - {name: '{{ database_name }}}'}
-      when: database_name is defined and database_name != ''
+- name: Create MySQL database
+  mysql_db:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ mysql_databases }}"

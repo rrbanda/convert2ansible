@@ -1,38 +1,26 @@
----
-- name: Ensure Apache is managed
-  hosts: all
-  become: yes
-  vars:
-    httpd_conf_source: "puppet:///modules/apache/httpd.conf"
-
+- name: Apache configuration playbook
+  hosts: localhost
   tasks:
-    - name: Install httpd package
-      package:
+    - name: Ensure httpd package is installed or absent based on 'disable' parameter.
+      yum:
+        name: "httpd"
+        state: "{{ installed }}"
+      when: ansible_os_family == "RedHat" and architecture == "x86_64"
+      
+    - name: Ensure httpd service is running or stopped based on 'disable' parameter.
+      systemd:
         name: httpd
-        state: present
-      when: ansible_os_family == 'RedHat' and ansible_architecture == 'x86_64'
-      tags: [package, install]
-
-    - name: Install httpd package (32-bit)
-      package:
-        name: httpd
-        state: present
-      when: ansible_os_family == 'RedHat' and ansible_architecture == 'i386'
-      tags: [package, install]
-
-    - name: Ensure httpd service is managed
-      service:
-        name: httpd
-        state: "{{ ('running' if apache_enabled else 'stopped') }}"
-        enabled: "{{ apache_enabled }}"
-      tags: [service]
-
-    - name: Ensure httpd.conf is configured
+        enabled: yes
+        state: "{{ ensure }}"
+        
+- name: Configure httpd
+  hosts: localhost
+  tasks:
+    - name: Copy Apache config file
       copy:
-        dest: /etc/httpd/conf/httpd.conf
+        src: "{{ apacheconf }}"
+        dest: "/etc/httpd/conf/httpd.conf"
         owner: root
         group: root
-        mode: 0644
-        content: "{{ httpd_conf_source }}"
-      when: apache_enabled
-      tags: [config]
+        mode: '0644'
+      when: ansible_os_family == "RedHat"
