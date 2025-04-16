@@ -1,3 +1,4 @@
+# app.py
 import streamlit as st
 import streamlit.components.v1 as components
 import os
@@ -7,11 +8,15 @@ from configparser import ConfigParser
 from time import time
 import urllib.parse
 
-# === Logging ===
-log_file = os.path.join("/tmp", "app.log")
-logging.basicConfig(filename=log_file, level=logging.DEBUG, format='%(asctime)s [%(levelname)s] %(message)s')
+# === Safe logging for OpenShift environments ===
+try:
+    os.makedirs("/tmp/logs", exist_ok=True)
+    logging_path = "/tmp/logs/app.log"
+except Exception:
+    logging_path = "app.log"
+logging.basicConfig(filename=logging_path, level=logging.DEBUG, format='%(asctime)s [%(levelname)s] %(message)s')
 
-# === Load settings ===
+# === Config loading ===
 config = ConfigParser()
 config.read("settings.config")
 
@@ -21,46 +26,24 @@ ollama_host_default = config.get("ollama", "host", fallback="localhost:11434")
 ollama_model_default = config.get("ollama", "model_name", fallback="deepseek-r1:8b")
 default_ai = config.get("general", "ai_to_use", fallback="maas")
 
-# === Page Setup ===
+# === UI setup ===
 st.set_page_config(page_title="Convert IaC to Ansible", page_icon="🅰️", layout="wide")
-
-# === Top UI ===
 st.markdown("""
     <style>
     .top-header {
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        background-color: #0f0f0f;
-        padding: 10px 0 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        position: sticky; top: 0; z-index: 1000;
+        background-color: #0f0f0f; padding: 10px 0 20px;
+        display: flex; flex-direction: column; align-items: center; text-align: center;
     }
-    .top-header img {
-        max-width: 220px;
-        height: auto;
-    }
-    .top-header .title {
-        font-size: 20px;
-        margin-top: 8px;
-        color: white;
-        font-weight: bold;
-    }
-    .top-header .version {
-        font-size: 14px;
-        color: #bbb;
-        margin-top: 2px;
-    }
+    .top-header img { max-width: 220px; height: auto; }
+    .top-header .title { font-size: 20px; margin-top: 8px; color: white; font-weight: bold; }
+    .top-header .version { font-size: 14px; color: #bbb; margin-top: 2px; }
     .loading-bar {
-        height: 4px;
-        background: linear-gradient(to right, #4facfe, #00f2fe);
+        height: 4px; background: linear-gradient(to right, #4facfe, #00f2fe);
         animation: loadbar 2s linear infinite;
     }
     @keyframes loadbar {
-        0%   { transform: translateX(-100%); }
+        0% { transform: translateX(-100%); }
         100% { transform: translateX(100%); }
     }
     </style>
@@ -73,23 +56,24 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# === Sidebar ===
-st.sidebar.title("⚙️ Config Gen AI ")
-ai_choice = st.sidebar.radio("Backend", ["ollama", "wxai", "maas"],
-                             index=0 if default_ai == "ollama" else 1 if default_ai == "wxai" else 2)
+# === Sidebar AI Settings ===
+st.sidebar.title("⚙️ Config Gen AI")
+ai_choice = st.sidebar.radio("Backend", ["ollama", "wxai", "maas"], index=2 if default_ai == "maas" else 0)
 
 if ai_choice == "ollama":
     from ai_modules.ollama_explanator import Ollama
     host = st.sidebar.text_input("Ollama Host", ollama_host_default)
-    temp_ollama = Ollama(host=host)
-    models = temp_ollama.list_models()
-    model_dropdown = st.sidebar.selectbox("Model", models)
-    model_name = model_dropdown.split(" (")[0].strip()
-    if model_name.startswith("Error fetching"):
-        st.sidebar.error("❌ Ollama not available.")
+
+    try:
+        temp_ollama = Ollama(host=host)
+        models = temp_ollama.list_models()
+        model_dropdown = st.sidebar.selectbox("Model", models)
+        model_name = model_dropdown.split(" (")[0].strip()
+        st.sidebar.success(f"🔍 Using model: `{model_name}`")
+        ai = Ollama(model_name=model_name, host=host)
+    except Exception as e:
+        st.sidebar.error(f"❌ Ollama not available.\n{e}")
         st.stop()
-    st.sidebar.write(f"🔍 Using model: `{model_name}`")
-    ai = Ollama(model_name=model_name, host=host)
 
 elif ai_choice == "wxai":
     from ai_modules.wxai import WxAI
@@ -110,7 +94,7 @@ elif ai_choice == "maas":
 
 summary_path = st.sidebar.text_input("Output Folder", default_output_path)
 
-# === File Selection ===
+# === File input ===
 mode = st.radio("Choose File Source", ["Upload Files", "Browse Existing"])
 files_to_process = []
 
@@ -125,10 +109,9 @@ else:
         selected = st.multiselect("Select files", all_files)
         files_to_process = [os.path.join(folder, f) for f in selected]
 
-# === Process Files ===
+# === Main processing ===
 if st.button("🚀 Convert to Ansible", disabled=not files_to_process):
     os.makedirs(summary_path, exist_ok=True)
-
     loading_placeholder = st.empty()
     loading_placeholder.markdown('<div class="loading-bar"></div>', unsafe_allow_html=True)
 
@@ -138,10 +121,9 @@ if st.button("🚀 Convert to Ansible", disabled=not files_to_process):
     for i, file in enumerate(files_to_process):
         filename = os.path.basename(file.name if hasattr(file, "name") else file)
         content = file.read().decode("utf-8") if hasattr(file, "read") else open(file, 'r').read()
-
         context = "Puppet module" if filename.endswith(".pp") else "Chef Recipe"
-        logging.info(f"🔁 Calling backend: {ai.__class__.__name__} | Model: {getattr(ai, 'model_name', 'N/A')}")
 
+        logging.info(f"🔁 Backend: {ai.__class__.__name__} | Model: {getattr(ai, 'model_name', 'N/A')}")
         try:
             with st.spinner(f"⏳ Generating playbook for: {filename}..."):
                 start = time()
@@ -151,6 +133,7 @@ if st.button("🚀 Convert to Ansible", disabled=not files_to_process):
             match = re.search(r"```yaml\n(.*?)\n```", output, re.DOTALL)
             yaml_text = match.group(1) if match else output
             result_path = os.path.join(summary_path, f"{filename}.yaml")
+
             with open(result_path, 'w') as f:
                 f.write(yaml_text)
 

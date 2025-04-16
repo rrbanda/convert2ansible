@@ -1,0 +1,16 @@
+---
+- name: Configure MySQL
+  hosts: localhost
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - name: Ensure directories exist
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      with_items:
+        - /etc/mysql
+        - /etc/mysql/conf.d
+ 
+- include: tasks/main.yml
