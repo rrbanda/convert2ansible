@@ -1,0 +1,7 @@
+llama_stack:
+  local:
+    base_url: "http://localhost:8321"
+    model: "llama3.2:3b"
+  remote:
+    base_url: "https://llama-stack-llama-stack.apps.cluster-t7v2h.t7v2h.sandbox2103.opentlc.com"
+    model: "llama32-3b"
