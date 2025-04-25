@@ -1,5 +1,5 @@
 # 🧙‍♂️ Convert to Ansible
-Convert to Ansible is a smart, expandable Python-based tool that converts [Puppet](https://www.puppet.com) modules or [Chef](https://www.chef.io) recipes into clean, production-grade [Ansible](https://www.redhat.com/en/ansible) playbooks using AI.
+Convert to Ansible is a smart, expandable Python-based tool that converts [Puppet](https://www.puppet.com) modules or [Chef](https://www.chef.io) recipes into clean, production-grade [Ansible](https://docs.ansible.com) playbooks using AI.
 
 It supports:
 - ✅ **Local Ollama** for offline inference
