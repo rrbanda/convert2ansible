@@ -135,7 +135,7 @@ Pull requests, issues, and feature suggestions are welcome!
 
 ⚠️ Disclaimer
 
-   Convert to Ansible is an experimental project created for experiment with the tech stack . 
+   Convert to Ansible is an fun project created for experimenting with the tech stack and evaluating the responses . 
    It is not officially supported by any enterprise.
 
 ---
