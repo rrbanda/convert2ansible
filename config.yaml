@@ -8,4 +8,4 @@ llama_stack:
   maas:
     base_url: https://granite-8b-code-instruct-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com/v1
     model: granite-8b-code-instruct-128k
-    api_key: "2ba8669e09325f3b7e2b8a5f9815d0ae"
+    api_key: "key"

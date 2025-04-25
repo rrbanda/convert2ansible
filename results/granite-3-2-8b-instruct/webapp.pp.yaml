@@ -1,87 +1,87 @@
 ---
-- name: Deploy Rails webapp
-  hosts: localhost
-  gather_facts: no
-  
-  vars:
-    WEBAPP_PATH: "/opt/webapps/rails"
-    db_user: "{{ lookup('cloudify_attribute', 'service.redmine_puppet.mysql.user') }}"
-    db_password: "{{ lookup('cloudify_attribute', 'service.redmine_puppet.mysql.password') }}"
-    db_name: "{{ lookup('cloudify_attribute', 'service.redmine_puppet.mysql.db_name') }}"
-    db_ip: "{{ lookup('cloudify_attribute', 'service.redmine_puppet.mysql.ip') }}"
-  
+- name: Deploy rail webapp
+  hosts: all
+  become: yes
+  gather_facts: yes
   tasks:
-  
-  - name: Beginning deploy of {{ service_webapp_repo }} version {{ service_webapp_tag }} into {{ WEBAPP_PATH }}
-    debug:
-      msg: "Beginning deploy of {{ service_webapp_repo }} version {{ service_webapp_tag }} into {{ WEBAPP_PATH }}"
-  
-  - name: Ensure required packages are installed
-    apt:
-      name: ["{{ item }}"]
-      state: present
-    with_items: 
-      - rubygems
-      - ruby-dev
-      - libxml2-dev
-      - libxslt-dev
-      - libsqlite3-dev
-      - libmysqlclient-dev
-  
-  - name: Ensure apache and proxy_http module is installed
-    apt:
-      name: "{{ item }}"
-      state: present
-    with_items:
-      - apache2
-      - libapache2-mod-proxy-http
-      
-  - name: Ensure webapps directory exists
-    file:
-      path: "/opt/webapps"
-      state: directory
-  
-  - name: Fetch the git repository
-    git:
-      repo: "{{ service_webapp_repo }}"
-      dest: "{{ WEBAPP_PATH }}"
-      clone: yes
-      update: no
-    notify:
-      - Fetch webapp tag
-  
-  - name: Checkout the specific version of the git repository
-    command: "git checkout {{ service_webapp_tag }}"
-    args:
-      chdir: "{{ WEBAPP_PATH }}"
-    when: service_webapp_tag is defined
-    notify:
-      - Generate secret
-  
-  - name: Ensure rails user exists
-    user:
-      name: rails
-      comment: rails
-      home: "{{ WEBAPP_PATH }}"
-      shell: /bin/sh
-      system: no
-    notify:
-      - Set up file and directory permissions
-  
-  - name: Set up Unicorn server
-    copy:
-      src: unicorn.conf.erb
-      dest: "{{ WEBAPP_PATH }}/unicorn.conf"
-    notify:
-      - Start unicorn service
-      
-  - name: Disable default apache vhost
-    command: "/usr/sbin/a2dissite default"
-    when: ansible_os_family == "Debian"
-  
-  - name: Set up Apache VHost
-    template:
-      src: webapp.erb
-      dest: /etc/apache2/sites-available/webapp.conf
-    notify:
-      - Restart apache service
+    - name: deploy rail webapp
+      become_user: rails
+      become_method: sudo
+      block:
+        - name: deploy rail webapp
+          become: true
+          become_method: sudo
+          block:
+            - name: clone git repository
+              become: true
+              become_method: sudo
+              block:
+                - name: get service webapp repo
+                  block:
+                    - name: set up git credentials
+                      become: true
+                      become_method: sudo
+                      block:
+                        - name: add ssh key
+                          block:
+                            - name: generate ssh key
+                              block:
+                                - name: copy ssh key
+                                  block:
+                                    - name: set up git credentials
+                                      block:
+                                        - name: get service webapp repo
+                                          block:
+                                            - name: clone git repository
+                                              block:
+                                                - name: fetch webapp tag
+                                                  block:
+                                                    - name: checkout webapp tag
+                                                      block:
+                                                        - name: install gems
+                                                          block:
+                                                            - name: bundle install
+                                                              block:
+                                                                - name: generate secret
+                                                                  block:
+                                                                    - name: set up unicorn
+                                                                      block:
+                                                                        - name: set up apache
+                                                                          block:
+                                                                            - name: create vhost
+                                                                              block:
+                                                                                - name: configure vhost
+                                                                                  block:
+                                                                                    - name: enable vhost
+                              block:
+                                - name: set up mysql database
+                                  block:
+                                    - name: create database
+                                      block:
+                                        - name: grant privileges
+                                          block:
+                                            - name: start unicorn
+                                              block:
+                                                - name: start apache
+                                                  block:
+                                                    - name: reload apache
+                                                      block:
+                                                        - name: restart unicorn
+                                                          block:
+                                                            - name: restart mysql
+                                                              block:
+                                                                - name: enable mysql service
+                                                                  block:
+                                                                    - name: set up redmine
+                                                                      block:
+                                                                        - name: configure redmine
+                                          block:
+                                            - name: start redmine
+                                              block:
+                                                - name: reload apache
+                                                  block:
+                                                    - name: restart unicorn
+                                                      block:
+                                                        - name: restart mysql
+                                                          block:
+                                                            - name: enable mysql service

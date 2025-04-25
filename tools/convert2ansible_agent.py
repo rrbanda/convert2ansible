@@ -1,3 +1,5 @@
+# tools/convert2ansible_agent.py
+
 import argparse
 import yaml
 import os
@@ -17,7 +19,7 @@ args = parser.parse_args()
 # Load DSL Code
 # ------------------------------
 with open(args.input_file, "r") as f:
-    input_code = f.read()
+    input_code = f.read().strip()
 
 # ------------------------------
 # Load Config
@@ -26,101 +28,48 @@ with open("config.yaml", "r") as f:
     config = yaml.safe_load(f)
 
 # ------------------------------
-# Classifier Setup (local by default)
+# Choose Backend
 # ------------------------------
-classifier_env = config.get("default", "local")
-ollama_cfg = config["llama_stack"][classifier_env]
-classifier_model = ollama_cfg["model"]
-classifier_client = LlamaStackClient(base_url=ollama_cfg["base_url"])
+env = config.get("default", "local")
+ollama_cfg = config["llama_stack"]["local"]
+maas_cfg = config["llama_stack"]["maas"]
 
-print(f"✅ Connected to Llama Stack server @ {ollama_cfg['base_url']}")
-print("🔎 Classifying DSL using builtin::code_interpreter...")
-
-classifier_agent = Agent(
-    client=classifier_client,
-    model=classifier_model,
-    instructions="""
-You are a Python interpreter. Evaluate the function dsl_classifier_tool
-and print only one word — either 'chef', 'puppet', or 'unknown'.
-    """,
-    tools=["builtin::code_interpreter"],
-    tool_config={"tool_choice": "auto"}
-)
-
-classifier_code = f"""
-def dsl_classifier_tool(code):
-    chef_keywords = ["recipe", "::", "default['", "cookbook_file", "template", "node["]
-    puppet_keywords = ["class ", "define ", "$", "notify", "file {{", "package {{"]
-    code_lower = code.lower()
-    if any(k in code_lower for k in chef_keywords):
-        return "chef"
-    elif any(k in code_lower for k in puppet_keywords):
-        return "puppet"
-    else:
-        return "unknown"
-
-code = \"\"\"{input_code}\"\"\"
-print(dsl_classifier_tool(code))
-"""
-
-dsl_type = None
-session_id = classifier_agent.create_session("dsl-classifier")
-turn = classifier_agent.create_turn(
-    session_id=session_id,
-    messages=[{"role": "user", "content": classifier_code}],
-    stream=True
-)
-
-# Parse classifier output
-for log in EventLogger().log(turn):
-    if hasattr(log, "content") and isinstance(log.content, str):
-        output = log.content.strip().lower()
-        print(f"🔎 Raw classifier output: {output}")
-        if output in ["chef", "puppet"]:
-            dsl_type = output
-            break
-
-if not dsl_type:
-    print("❌ Failed to classify DSL.")
-    exit(1)
-
-print(f"\n🧠 DSL classified as: {dsl_type}")
-
-# ------------------------------
-# Conversion Agent Setup
-# ------------------------------
 if args.remote:
-    maas_cfg = config["llama_stack"]["maas"]
-    conversion_model = maas_cfg["model"]
+    model_id = maas_cfg["model"]
+    base_url = maas_cfg["base_url"]
     api_key = maas_cfg["api_key"]
-    conversion_client = LlamaStackClient(
-        base_url=maas_cfg["base_url"],
-        headers={"X-LlamaStack-Provider-Data": f'{{ "together_api_key": "{api_key}" }}'}
+    client = LlamaStackClient(
+        base_url=base_url,
+        provider_data={"together_api_key": api_key}  # ✅ FIXED: use provider_data
     )
 else:
-    conversion_model = ollama_cfg["model"]
-    conversion_client = classifier_client
+    model_id = ollama_cfg["model"]
+    base_url = ollama_cfg["base_url"]
+    client = LlamaStackClient(base_url=base_url)
 
-print(f"\n🛠️ Converting {dsl_type} to Ansible using builtin::rag...")
+print(f"✅ Connected to Llama Stack server @ {base_url}")
+print("🛠️ Converting to Ansible using builtin::rag...")
 
+# ------------------------------
+# Agent Definition
+# ------------------------------
 agent = Agent(
-    client=conversion_client,
-    model=conversion_model,
-    instructions=f"""
-You are a DevOps expert. Convert {dsl_type} infrastructure code to a valid Ansible playbook.
-Use the builtin::rag tool to retrieve helpful examples. Respond with ONLY valid YAML.
-No markdown, no explanations, no comments — just clean Ansible playbook.
+    client=client,
+    model=model_id,
+    instructions="""
+You are a DevOps expert. Convert the given Chef or Puppet infrastructure code into a valid Ansible playbook.
+Use the builtin::rag tool to enrich your context with real-world infrastructure knowledge before responding.
+Reply with ONLY clean Ansible YAML — no markdown, comments, or explanations.
     """,
     tools=[{
         "name": "builtin::rag",
         "args": {
-            "vector_db_ids": [f"{dsl_type}_docs"],
-            "top_k": 3
+            "vector_db_ids": ["puppet_docs", "chef_docs"],
+            "top_k": 3,
+            "compile": True
         }
     }],
     tool_config={"tool_choice": "auto"},
-    input_shields=[],
-    output_shields=[],
     max_infer_iters=4,
     sampling_params={
         "strategy": {"type": "top_p", "temperature": 0.3, "top_p": 0.9},
@@ -128,20 +77,26 @@ No markdown, no explanations, no comments — just clean Ansible playbook.
     }
 )
 
-session_id = agent.create_session(f"{dsl_type}-to-ansible")
+# ------------------------------
+# Run Agent Session
+# ------------------------------
+session_id = agent.create_session("puppet-chef-to-ansible")
 turn = agent.create_turn(
     session_id=session_id,
     messages=[{"role": "user", "content": input_code}],
     stream=True
 )
 
-# Collect and print response
 final_output = ""
 for log in EventLogger().log(turn):
     if hasattr(log, "content") and isinstance(log.content, str):
         final_output += log.content
 
 final_output = final_output.strip()
+
+# ------------------------------
+# Display Final Output
+# ------------------------------
 if final_output:
     print("\n✅ Final Ansible Playbook:\n")
     print(final_output)

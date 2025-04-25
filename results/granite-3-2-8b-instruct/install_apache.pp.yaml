@@ -1,23 +1,40 @@
+```yml
 ---
-- name: Apache configuration playbook
+- name: Manage Apache
   hosts: all
-  tasks:
-    - name: Configure httpd based on operating system and architecture
-      ansible.builtin.package:
-        name: "{{ 'httpd.x86_64' if arch == 'x86_64' else 'httpd.i386' }}"
-        state: "{{ 'present' if not disable else 'absent' }}"
-      when: ansible_os_family in ['RedHat', 'CentOS']
-    - name: Configure httpd service based on operating system and architecture
-      ansible.builtin.service:
+  become: yes
+
+  case:
+    - when 'CentOS|RedHat'
+      case:
+        - when 'x86_64'
+          package:
+            name: httpd
+            ensure: present
+        - else
+          package:
+            name: httpd.i386
+            ensure: present
+      service:
         name: httpd
-        state: "{{ 'running' if not disable else 'stopped' }}"
-        enabled: "{{ not disable }}"
-      when: ansible<｜begin▁of▁sentence｜>.builtin.package in ['RedHat', 'CentOS']
-    - name: Configure httpd conf based on operating system and architecture
-      ansible.builtin.copy:
-        src: "{{ apacheconf if apacheconf == 'default' else '' }}"
-        dest: /etc/httpd/conf/httpd.conf
-        owner: root
-        group: root
-        mode: 0644
-      when: ansible_os_family in ['RedHat', 'CentOS']
+        state: "{{ lookup('fact', 'kernel_architecture') == 'x86_64' ? 'running' : 'stopped' }}"
+        enabled: "{{ lookup('fact', 'kernel_architecture') == 'x86_64' ? true : false }}"
+    - when else
+      package:
+        name: httpd
+        ensure: absent
+      service:
+        name: httpd
+        state: "stopped"
+        enabled: false
+
+  handlers:
+    - name: reload_apache
+      service:
+        name: httpd
+        state: restarted
+
+  vars:
+    apacheconf:
+      default: "/etc/httpd/conf/httpd.conf"
+```

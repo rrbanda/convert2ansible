@@ -1,9 +1,38 @@
-- name: Create MySQL database
+```yml
+---
+- name: Create MySQL Database
   hosts: localhost
+  become: yes
   gather_facts: no
-  
   tasks:
-    - name: Execute command to create a database
-      command: /usr/bin/mysql -uroot -e "create database {{ name }}"
-      args:
-        removes: "/usr/bin/mysql  -uroot {{ name }}"
+    - name: Check if mysql service is running
+      stat:
+        name: mysql
+      register: mysql_status
+    - debug:
+        msg: "{{ item }}"
+      with_item: mysql_status.ansible_facts.mysql.state
+    - debug:
+        msg: "mysql service is {{ item }}"
+      when: item != 'running'
+    - name: Create MySQL database
+      become_method: yes
+      become_user: root
+      block:
+        - name: Check if mysql command output matches expected value
+          shell: "/usr/bin/mysql -uroot -e \"show databases;\""
+          register: mysql_output
+        - debug:
+            msg: "{{ item }}"
+          when: item != "show databases;"
+        - debug:
+            msg: "mysql output is {{ item }}"
+          when: item == "show databases;"
+        - name: Create database
+          become_method: yes
+          become_user: root
+          block:
+            - name: Create database
+              mysql_db:
+                name: "{{ inventory_hostname }}-db"
+```

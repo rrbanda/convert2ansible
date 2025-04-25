@@ -1,53 +1,27 @@
+```yml
 ---
-- name: Remove proxy from /etc/apt/apt.conf
-  command: sed --in-place '/^Acquire::http::Proxy/d' /etc/apt/apt.conf
-  when: grep Acquire::http::Proxy /etc/apt/apt.conf
-  tags:
-    - apt
-    - cacher-client
+- name: Convert to Ansible playbook
+  become: yes
 
-- name: apt-get update
-  command: apt-get update
-  tags:
-    - apt
-    - update
+  handlers:
+  - name: apt-get update
+    apt_get_update:
+      cache_valid_time: {{ node['apt']['cacher_client_cache_valid_time'] }}
 
-- name: Install apt-transport-https
-  apt:
-    name: apt-transport-https
+  apt_cacher_ng:
+    cacher_ipaddress: "{{ item.ipaddress }}"
+    cacher_port: "{{ item.apt.cacher_port }}"
+    cacher_interface: "{{ item.apt.cacher_interface }}"
+    cacher_ssl_support: "{{ item.apt.cacher_ssl_support }}"
+    cache_bypass: "{{ item.apt.cache_bypass }}"
     state: present
-  tags:
-    - apt
-    - transport-https
+  when: item and item.apt
 
-- name: Install ca-certificates
-  apt:
-    name: ca-certificates
-    state: present
-  tags:
-    - apt
-    - ca-certificates
+  apt_get_update:
+    cache_valid_time: {{ node['apt']['cacher_client_cache_valid_time'] }}
+  when: node['apt']['compiletime']
 
-- name: Install curl
-  apt:
-    name: curl
-    state: present
-  tags:
-    - apt
-    - curl
-
-- name: Install gnupg2
-  apt:
-    name: gnupg2
-    state: present
-  tags:
-    - apt
-    - gnupg2
-
-- name: Install software-properties-common
-  apt:
-    name: software-properties-common
-    state: present
-  tags:
-    - apt
-    - software-properties-common
+  apt_get_update:
+    cache_valid_time: {{ node['apt']['cacher_client_cache_valid_time'] }}
+  when: node['apt']['compiletime'] == false
+```
