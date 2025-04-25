@@ -1,40 +1,27 @@
-```yml
----
-- name: Manage Apache
-  hosts: all
-  become: yes
+- name: Install httpd package
+  package:
+    name: httpd.x86_64
+    state: present
+  when: operatingsystem == 'CentOS' and architecture == 'x86_64'
 
-  case:
-    - when 'CentOS|RedHat'
-      case:
-        - when 'x86_64'
-          package:
-            name: httpd
-            ensure: present
-        - else
-          package:
-            name: httpd.i386
-            ensure: present
-      service:
-        name: httpd
-        state: "{{ lookup('fact', 'kernel_architecture') == 'x86_64' ? 'running' : 'stopped' }}"
-        enabled: "{{ lookup('fact', 'kernel_architecture') == 'x86_64' ? true : false }}"
-    - when else
-      package:
-        name: httpd
-        ensure: absent
-      service:
-        name: httpd
-        state: "stopped"
-        enabled: false
+- name: Install httpd package
+  package:
+    name: httpd.i386
+    state: present
+  when: operatingsystem == 'CentOS' and architecture == 'i386'
 
-  handlers:
-    - name: reload_apache
-      service:
-        name: httpd
-        state: restarted
+- name: Start and enable httpd service
+  service:
+    name: httpd
+    state: started
+    enabled: true
+  when: operatingsystem == 'CentOS'
 
-  vars:
-    apacheconf:
-      default: "/etc/httpd/conf/httpd.conf"
-```
+- name: Copy httpd.conf file
+  copy:
+    src: httpd.conf
+    dest: /etc/httpd/conf/httpd.conf
+    owner: root
+    group: root
+    mode: 0644
+  when: operatingsystem == 'CentOS'

@@ -4,7 +4,7 @@ from llama_stack_client import LlamaStackClient
 from llama_stack_client.types import Document
 
 client = LlamaStackClient(base_url="http://localhost:8321")
-print("✅ Connected to Llama Stack")
+print(" Connected to Llama Stack")
 
 # DSL guidance content (could also be loaded from external files)
 chef_content = """
@@ -54,4 +54,4 @@ for vector_db_id, content in dbs.items():
     else:
         print(f"ℹ️  {vector_db_id} already exists")
 
-print("✅ RAG vector DBs ready for classification pipeline.")
+print(" RAG vector DBs ready for classification pipeline.")

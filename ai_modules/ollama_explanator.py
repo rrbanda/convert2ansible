@@ -44,7 +44,7 @@ Only provide the YAML code (no explanations, no comments).
 
         except Exception as e:
             logging.exception("[Ollama] Error during prompt generation")
-            return f"❌ Error contacting Ollama: {e}"
+            return f"Error contacting Ollama: {e}"
 
     def list_models(self):
         try:

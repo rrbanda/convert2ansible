@@ -2,9 +2,9 @@
 Convert to Ansible is a smart, expandable Python-based tool that converts [Puppet](https://www.puppet.com) modules or [Chef](https://www.chef.io) recipes into clean, production-grade [Ansible](https://docs.ansible.com) playbooks using Gen AI.
 
 It supports:
-- ✅ **Local Ollama** for offline inference
-- ✅ **MaaS (Model-as-a-Service)** with `granite-8b-code-instruct-128k` for enterprise-grade generation
-- ✅ **Agentic mode with RAG**: combines local **LlamaStack** RAG with remote **MaaS** for high-quality playbooks
+- **Local Ollama** for offline inference
+- **MaaS (Model-as-a-Service)** with `granite-8b-code-instruct-128k` for enterprise-grade generation
+- **Agentic mode with RAG**: combines local **LlamaStack** RAG with remote **MaaS** for high-quality playbooks
 
 ---
 

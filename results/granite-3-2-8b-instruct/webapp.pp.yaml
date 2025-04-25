@@ -1,87 +1,108 @@
+```yml
 ---
-- name: Deploy rail webapp
+- name: Deploy rail web app
+  gather_facts: yes
   hosts: all
   become: yes
-  gather_facts: yes
+
+  vars:
+    WEBAPP_PATH: /opt/webapps/rails
+    service_webapp_repo: "{{ lookup('env', 'service_webapp_repo') }}"
+    service_webapp_tag: "{{ lookup('env', 'service_webapp_tag') }}"
+
   tasks:
-    - name: deploy rail webapp
-      become_user: rails
-      become_method: sudo
-      block:
-        - name: deploy rail webapp
-          become: true
-          become_method: sudo
-          block:
-            - name: clone git repository
-              become: true
-              become_method: sudo
-              block:
-                - name: get service webapp repo
-                  block:
-                    - name: set up git credentials
-                      become: true
-                      become_method: sudo
-                      block:
-                        - name: add ssh key
-                          block:
-                            - name: generate ssh key
-                              block:
-                                - name: copy ssh key
-                                  block:
-                                    - name: set up git credentials
-                                      block:
-                                        - name: get service webapp repo
-                                          block:
-                                            - name: clone git repository
-                                              block:
-                                                - name: fetch webapp tag
-                                                  block:
-                                                    - name: checkout webapp tag
-                                                      block:
-                                                        - name: install gems
-                                                          block:
-                                                            - name: bundle install
-                                                              block:
-                                                                - name: generate secret
-                                                                  block:
-                                                                    - name: set up unicorn
-                                                                      block:
-                                                                        - name: set up apache
-                                                                          block:
-                                                                            - name: create vhost
-                                                                              block:
-                                                                                - name: configure vhost
-                                                                                  block:
-                                                                                    - name: enable vhost
-                              block:
-                                - name: set up mysql database
-                                  block:
-                                    - name: create database
-                                      block:
-                                        - name: grant privileges
-                                          block:
-                                            - name: start unicorn
-                                              block:
-                                                - name: start apache
-                                                  block:
-                                                    - name: reload apache
-                                                      block:
-                                                        - name: restart unicorn
-                                                          block:
-                                                            - name: restart mysql
-                                                              block:
-                                                                - name: enable mysql service
-                                                                  block:
-                                                                    - name: set up redmine
-                                                                      block:
-                                                                        - name: configure redmine
-                                          block:
-                                            - name: start redmine
-                                              block:
-                                                - name: reload apache
-                                                  block:
-                                                    - name: restart unicorn
-                                                      block:
-                                                        - name: restart mysql
-                                                          block:
-                                                            - name: enable mysql service
+  - name: Deploy web app
+    apt:
+      name: rubygems
+      state: present
+
+  - name: Install bundler
+    package:
+      name: bundler
+      provider: gem
+      require: rubygems
+
+  - name: Set up Apache proxy
+    apache::vhost:
+      template: webapp/webapp.erb
+      require: [bundle install, generate secret]
+
+  - name: Create directories
+    file:
+      path: /opt/webapps
+      state: directory
+
+  - name: Clone web app repo
+    git:
+      repo: "{{ service_webapp_repo }}"
+      dest: "{{ WEBAPP_PATH }}"
+      version: "{{ service_webapp_tag }}"
+      path: /usr/bin/:/usr/local/bin/:/bin/
+      create: yes
+      require: File['opt/webapps']
+
+  - name: Checkout web app tag
+    git:
+      repo: "{{ service_webapp_repo }}"
+      dest: "{{ WEBAPP_PATH }}"
+      path: /usr/bin/:/usr/local/bin/:/bin/
+      cwd: "{{ WEBAPP_PATH }}"
+      version: "{{ service_webapp_tag }}"
+      create: yes
+      require: [git['opt/webapps']]
+
+  - name: Install unicorn
+    file:
+      path: Gemfile.local
+      content: "gem 'unicorn'\n"
+      state: present
+      require: [git['opt/webapps'], bundler]
+
+  - name: Run bundle install
+    shell: bundle install --without development test rmagick postgresql
+    cwd: "{{ WEBAPP_PATH }}"
+    path: /usr/bin/:/usr/local/bin/:/bin/
+    require: [Gemfile.local, bundler]
+
+  - name: Generate secret
+    shell: bundle exec rake generate_session_store
+    cwd: "{{ WEBAPP_PATH }}"
+    path: /usr/bin/:/usr/local/bin/:/bin/
+    require: [bundle install]
+
+  - name: Set up database
+    template:
+      src: webapp/database.yml.erb
+      dest: {{ WEBAPP_PATH }}/config/database.yml
+      mode: '0644'
+      require: [bundle install, generate secret]
+
+  - name: Run rake tasks
+    shell: bundle exec rake db:migrate RAILS_ENV=production && bundle exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=en
+    cwd: "{{ WEBAPP_PATH }}"
+    path: /usr/bin/:/usr/local/bin/:/bin/
+    require: [Gemfile.local, generate secret]
+
+  - name: Set up unicorn user
+    user:
+      name: rails
+      group: rails
+      shell: /bin/sh
+      home: "{{ WEBAPP_PATH }}"
+      require: [git['opt/webapps']]
+
+  - name: Set permissions
+    file:
+      path: "{{ item }}"
+      owner: rails
+      mode: '0755'
+      require: User[rails]
+    loop: "{{ ['{{ WEBAPP_PATH }}/files', '{{ WEBAPP_PATH }}/log', '{{ WEBAPP_PATH }}/tmp', '{{ WEBAPP_PATH }}/public']"}}"
+
+  - name: Start unicorn
+    upstart:
+      job:
+        description: unicorn app server
+        command: start-stop-daemon --start -c rails -d {{ WEBAPP_PATH }} --exec /usr/local/bin/bundle -- exec unicorn_rails -E production
+        require: [rake tasks, generate secret, Gemfile.local]
+```

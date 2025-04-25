@@ -62,10 +62,10 @@ Only provide the YAML code (no explanations, no comments). Use proper indentatio
                 choices = result.get("choices")
                 if not choices or not isinstance(choices, list) or not choices[0].get("text"):
                     logging.error(f"[MaaS] Unexpected response structure: {result}")
-                    return "❌ MaaS response did not contain valid 'choices'."
+                    return "MaaS response did not contain valid 'choices'."
 
                 return choices[0]["text"]
 
         except Exception as e:
             logging.exception("[MaaS] Error during prompt generation")
-            return f"❌ Error contacting MaaS: {e}"
+            return f"Error contacting MaaS: {e}"

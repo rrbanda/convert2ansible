@@ -5,7 +5,7 @@ from llama_stack_client import LlamaStackClient
 from llama_stack_client.lib.agents.agent import Agent
 from llama_stack_client.lib.agents.event_logger import EventLogger
 
-# ✅ Logging config
+# Logging config
 try:
     os.makedirs("/tmp/logs", exist_ok=True)
     logging_path = "/tmp/logs/app.log"
@@ -88,7 +88,7 @@ Respond with only valid Ansible YAML. No markdown, no comments.
             }
         )
 
-        logging.info("✅ Agent initialized with RAG and remote model override.")
+        logging.info("Agent initialized with RAG and remote model override.")
 
     def transform(self, code, context=""):
         logging.info(f"📝 Invoking Agent with DSL input. Context: {context}")
@@ -108,7 +108,7 @@ Respond with only valid Ansible YAML. No markdown, no comments.
 
         final_output = final_output.strip()
         if final_output:
-            logging.info("✅ Agent response successfully received.")
+            logging.info("Agent response successfully received.")
             final_output = flatten_blocks(final_output)
         else:
             logging.warning("⚠️ Agent returned no output.")
