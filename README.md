@@ -1,44 +1,134 @@
-# Automation Code SorcererX
+# 🧙‍♂️ Convert to Ansible
+Convert to Ansible is a smart, expandable Python-based tool that converts [Puppet](https://www.puppet.com) modules or [Chef](https://www.chef.io) recipes into clean, production-grade [Ansible](https://www.redhat.com/en/ansible) playbooks using AI.
 
-A small expandable Python application that utilises either [IBM Watsonx.ai Runtime](https://cloud.ibm.com/catalog/services/watsonxai-runtime) or [Ollama](https://ollama.com) locally to convert [Puppet](https://www.puppet.com) Modules or [Chef](https://www.chef.io) Recipes to [Ansible](https://www.redhat.com/en/ansible-collaborative) Playbooks.  
-
-Some sample results are included to compare the different modles from Watsonx.ai and Ollama.
-
-![architecture](https://github.com/bpaskin/Automation-Code-SorcererX/blob/main/images/code-sorcererx.png)
+It supports:
+- ✅ **Local Ollama** for offline inference
+- ✅ **MaaS (Model-as-a-Service)** with `granite-8b-code-instruct-128k` for enterprise-grade generation
+- ✅ **Agentic mode with RAG**: combines local **LlamaStack** RAG with remote **MaaS** for high-quality playbooks
 
 ---
 
-### To Use: ###
+### 📐 Architecture
 
-This was test with Python 3.12
-
-1. Clone the code to your local system 
+```text
+                        +-------------------+
+                        |   User Interface  |
+                        | (Streamlit UI App)|
+                        +---------+---------+
+                                  |
+                                  v
+                +-----------------------------+
+                |       Backend Selector      |
+                |  [ollama | maas | agentic]  |
+                +--------+----------+---------+
+                         |          |
+            +------------+          +---------------------+
+            |                                     |
+   +--------v--------+                   +--------v--------+
+   | Ollama Runtime  |                   |  Agentic Backend |
+   | (local LLMs)    |                   | using LlamaStack |
+   +-----------------+                   +--------+--------+
+                                                 |
+                                                 v
+         +------------------- RAG + MaaS Agent Pipeline --------------------+
+         |                                                                  |
+         |  LlamaStack Agent (local)                                        |
+         |  └── uses builtin::rag + embeddings (MiniLM, Ollama, etc.)       |
+         |                                                                  |
+         |  Generation handled by → Granite 8B Code Instruct via MaaS       |
+         +------------------------------------------------------------------+
 ```
+
+---
+
+### 🚀 How to Use
+
+Tested with Python 3.11+
+
+#### 1. Clone the repo
+```bash
 git clone https://github.com/bpaskin/Automation-Code-SorcererX.git
-```
-2. Enter the directory
-```
 cd Automation-Code-SorcererX
 ```
-3. Create and run in a virtual environment
+
+#### 2. Setup a virtual environment
+```bash
+python -m venv .venv
+source .venv/bin/activate
 ```
-python -m venv venv
-source venv/bin/activate
-```
-4. Add the required modules
-```
+
+#### 3. Install dependencies
+```bash
 pip install -r requirements.txt
-````
-5. Edit the settings file and update the settings to your environment (ai_to_use is either wxai or ollama)
 ```
-vi settings.config
+
+#### 4. Edit configuration files
+- `settings.config` for general paths and default backend
+- `config.yaml` for model settings (Ollama, LlamaStack, MaaS)
+
+Example `config.yaml`:
+
+```yaml
+default: local
+
+llama_stack:
+  local:
+    base_url: http://localhost:8321
+    model: llama3.2:3b
+
+  maas:
+    base_url: https://granite-8b-code-instruct-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com/v1
+    model: granite-8b-code-instruct-128k
+    api_key: "YOUR_MAAS_API_KEY"
 ```
-6. Add your Pupper or Chef files to the `upload` directory
-7. Run the program
+
+---
+
+### 💻 Launch the App (Streamlit UI)
+
+```bash
+streamlit run app.py
 ```
-python __main__.py
+
+#### Features:
+- Upload or browse code files (`.pp`, `.rb`, `.yml`)
+- Convert using **Ollama**, **MaaS**, or the **Agentic RAG+MaaS** pipeline
+- Output clean Ansible playbooks
+- Git repo integration with tag filtering
+- Linting (optional extension)
+
+---
+
+### 📂 Project Structure
+
+```text
+├── app.py                    # Streamlit UI
+├── ai_modules/
+│   ├── ollama_explanator.py
+│   ├── maas_model.py
+│   └── agentic_model.py     # Agentic backend using LlamaStack + MaaS
+├── tools/
+│   └── convert2ansible_agent.py
+├── config.yaml
+├── settings.config
+├── uploads/
+├── results/
 ```
-8. Evaluate the results in the directory specified in the settings.config
-</br>
-</br>
-𐕣 Funeral Winter 𐕣
+
+---
+
+### 🧠 VectorDB Requirements (Agentic mode)
+Ensure your LlamaStack server has these vector DBs created:
+
+- `puppet_docs`
+- `chef_docs`
+
+You can preload sample content via the LlamaStack admin or your own ingest script.
+
+---
+
+### 🤝 Contributions
+
+Pull requests, issues, and feature suggestions are welcome!
+
+---
