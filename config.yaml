@@ -1,7 +1,11 @@
+default: local
+
 llama_stack:
   local:
-    base_url: "http://localhost:8321"
-    model: "llama3.2:3b"
-  remote:
-    base_url: "https://llama-stack-llama-stack.apps.cluster-t7v2h.t7v2h.sandbox2103.opentlc.com"
-    model: "llama32-3b"
+    base_url: http://localhost:8321
+    model: llama3.2:3b
+
+  maas:
+    base_url: https://granite-8b-code-instruct-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com/v1
+    model: granite-8b-code-instruct-128k
+    api_key: "2ba8669e09325f3b7e2b8a5f9815d0ae"
