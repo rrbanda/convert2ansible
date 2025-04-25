@@ -132,3 +132,10 @@ You can preload sample content via the LlamaStack admin or your own ingest scrip
 Pull requests, issues, and feature suggestions are welcome!
 
 ---
+
+⚠️ Disclaimer
+
+   Convert to Ansible is an experimental project created for experiment with the tech stack . 
+   It is not officially supported by any enterprise.
+
+---
