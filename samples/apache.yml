@@ -1,9 +1,0 @@
----
-- hosts: all
-  tasks:
-    - name: install apache
-      shell: yum install -y httpd
-    - name: start apache
-      service:
-        name: httpd
-        state: started

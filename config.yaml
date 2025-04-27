@@ -24,5 +24,5 @@ vector_dbs:
 
 docling:
   base_url: https://docling-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com:443/v1
-  api_key: 02badbe9a8f05a66ab234b3daac07f6b
+  api_key: key
 
