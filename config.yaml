@@ -6,6 +6,23 @@ llama_stack:
     model: llama3.2:3b
 
   maas:
-    base_url: https://granite-8b-code-instruct-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com/v1
-    model: granite-8b-code-instruct-128k
-    api_key: "key"
+    base_url: https://mixtral-8x7b-instruct-v0-1-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com:443/v1
+    model: mistralai/Mixtral-8x7B-Instruct-v0.1
+    api_key: "5005612a20690d6e999780859a3fdbf8"
+
+vector_db_chunk_size: 512
+embedding_model: all-MiniLM-L6-v2
+embedding_dimension: 384
+vector_db_provider_id: faiss
+
+docs_folder_root: ./docs
+
+vector_dbs:
+  puppet_docs: puppet
+  chef_docs: chef
+  ansible_docs: ansible
+
+docling:
+  base_url: https://docling-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com:443/v1
+  api_key: 02badbe9a8f05a66ab234b3daac07f6b
+

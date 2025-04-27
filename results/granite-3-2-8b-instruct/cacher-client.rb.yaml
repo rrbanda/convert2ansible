@@ -1,27 +1,44 @@
-```yml
----
-- name: Convert to Ansible playbook
-  become: yes
-
-  handlers:
-  - name: apt-get update
-    apt_get_update:
-      cache_valid_time: {{ node['apt']['cacher_client_cache_valid_time'] }}
-
-  apt_cacher_ng:
-    cacher_ipaddress: "{{ item.ipaddress }}"
-    cacher_port: "{{ item.apt.cacher_port }}"
-    cacher_interface: "{{ item.apt.cacher_interface }}"
-    cacher_ssl_support: "{{ item.apt.cacher_ssl_support }}"
-    cache_bypass: "{{ item.apt.cache_bypass }}"
-    state: present
-  when: item and item.apt
-
-  apt_get_update:
-    cache_valid_time: {{ node['apt']['cacher_client_cache_valid_time'] }}
-  when: node['apt']['compiletime']
-
-  apt_get_update:
-    cache_valid_time: {{ node['apt']['cacher_client_cache_valid_time'] }}
+- name: Install and configure apt
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
   when: node['apt']['compiletime'] == false
-```
+  tasks: []
+- name: Remove proxy from /etc/apt/apt.conf
+  apt_key:
+    state: absent
+  when: node['apt']['cacher_ipaddress']
+  tasks: []
+- name: Create cacher template
+  template:
+    src: templates/01proxy.erb
+    dest: /etc/apt/apt.conf.d/01proxy
+    owner: root
+    group: root
+    mode: '0644'
+    variables:
+      proxy: '{{ apt_cacher_ip }}'
+      port: '{{ apt_cacher_port }}'
+      proxy_ssl: '{{ apt_cacher_ssl_support }}'
+      bypass: '{{ apt_cache_bypass }}'
+  tasks: []
+- name: Configure apt-cacher-ng
+  apt_cacher_ng:
+    cacher_ip: '{{ apt_cacher_ip }}'
+    cacher_port: '{{ apt_cacher_port }}'
+    cacher_interface: '{{ apt_cacher_interface }}'
+    cacher_ssl_support: '{{ apt_cacher_ssl_support }}'
+    cache_bypass: '{{ apt_cache_bypass }}'
+    state: present
+  tasks: []
+- name: Enable apt-get update
+  apt_get_update:
+    update_cache: true
+    cache_valid_time: 3600
+  when: node['apt']['compiletime'] == true
+  tasks: []
+- name: Notify apt-get update
+  notify:
+    handler: apt_get_update
+  when: node['apt']['compiletime'] != false
+  tasks: []

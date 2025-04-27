@@ -1,108 +1,134 @@
-```yml
----
-- name: Deploy rail web app
-  gather_facts: yes
+- name: Deploy rail webapp
   hosts: all
-  become: yes
-
-  vars:
-    WEBAPP_PATH: /opt/webapps/rails
-    service_webapp_repo: "{{ lookup('env', 'service_webapp_repo') }}"
-    service_webapp_tag: "{{ lookup('env', 'service_webapp_tag') }}"
-
+  become: true
   tasks:
-  - name: Deploy web app
-    apt:
-      name: rubygems
-      state: present
-
-  - name: Install bundler
-    package:
-      name: bundler
-      provider: gem
-      require: rubygems
-
-  - name: Set up Apache proxy
-    apache::vhost:
-      template: webapp/webapp.erb
-      require: [bundle install, generate secret]
-
-  - name: Create directories
+  - name: Create directory for webapps
     file:
       path: /opt/webapps
       state: directory
-
-  - name: Clone web app repo
-    git:
-      repo: "{{ service_webapp_repo }}"
-      dest: "{{ WEBAPP_PATH }}"
-      version: "{{ service_webapp_tag }}"
-      path: /usr/bin/:/usr/local/bin/:/bin/
-      create: yes
-      require: File['opt/webapps']
-
-  - name: Checkout web app tag
-    git:
-      repo: "{{ service_webapp_repo }}"
-      dest: "{{ WEBAPP_PATH }}"
-      path: /usr/bin/:/usr/local/bin/:/bin/
-      cwd: "{{ WEBAPP_PATH }}"
-      version: "{{ service_webapp_tag }}"
-      create: yes
-      require: [git['opt/webapps']]
-
+  - name: Install dependencies
+    package:
+      name:
+      - rubygems
+      - ruby-dev
+      - libxml2-dev
+      - libxslt-dev
+      - libsqlite3-dev
+      - libmysqlclient-dev
+    become: true
+  - name: Install bundler
+    package:
+      name: bundler
+    become: true
+    require:
+    - Package["rubygems"]
+  - name: Set up apache module
+    apache::module:
+      name: proxy_http
+    become: true
+  - name: Create webapp directory
+    file:
+      path: /opt/webapps
+      state: directory
+  - name: Fetch webapp repo
+    exec:
+      command: git clone {{ service_webapp_repo }} /opt/webapps
+    become: true
+    create_mode: 493
+    require:
+    - File['/opt/webapps']
+  - name: Fetch webapp tag
+    exec:
+      command: git checkout {{ service_webapp_tag }}
+    become: true
+    cwd: /opt/webapps
+    path: /usr/bin/:/usr/local/bin/:/bin/
+    require:
+    - Exec['fetch webapp repo']
   - name: Install unicorn
     file:
-      path: Gemfile.local
-      content: "gem 'unicorn'\n"
-      state: present
-      require: [git['opt/webapps'], bundler]
+      path: /opt/webapps/Gemfile.local
+      content: 'gem ''unicorn''
 
+        '
+    become: true
+    require:
+    - Exec['fetch webapp tag']
+    - Package["bundler"]
   - name: Run bundle install
-    shell: bundle install --without development test rmagick postgresql
-    cwd: "{{ WEBAPP_PATH }}"
+    exec:
+      command: bundle install --without development test rmagick postgresql
+    become: true
+    cwd: /opt/webapps
     path: /usr/bin/:/usr/local/bin/:/bin/
-    require: [Gemfile.local, bundler]
-
+    require:
+    - File['Gemfile.local']
+    - Package["bundler"]
   - name: Generate secret
-    shell: bundle exec rake generate_session_store
-    cwd: "{{ WEBAPP_PATH }}"
+    exec:
+      command: bundle exec rake generate_session_store
+    become: true
+    cwd: /opt/webapps
     path: /usr/bin/:/usr/local/bin/:/bin/
-    require: [bundle install]
-
-  - name: Set up database
+    require:
+    - Exec['bundle install']
+  - name: Configure database
     template:
       src: webapp/database.yml.erb
-      dest: {{ WEBAPP_PATH }}/config/database.yml
-      mode: '0644'
-      require: [bundle install, generate secret]
-
+      dest: /opt/webapps/config/database.yml
+    become: true
+    require:
+    - Exec['bundle install']
   - name: Run rake tasks
-    shell: bundle exec rake db:migrate RAILS_ENV=production && bundle exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=en
-    cwd: "{{ WEBAPP_PATH }}"
+    exec:
+      command: bundle exec rake db:migrate RAILS_ENV=production && bundle exec rake
+        redmine:load_default_data RAILS_ENV=production REDMINE_LANG=en
+    become: true
+    cwd: /opt/webapps
     path: /usr/bin/:/usr/local/bin/:/bin/
-    require: [Gemfile.local, generate secret]
-
+    require:
+    - File['Gemfile.local']
+    - Exec['generate secret']
   - name: Set up unicorn user
     user:
       name: rails
       group: rails
+      comment: rails
+      membership: minimum
       shell: /bin/sh
-      home: "{{ WEBAPP_PATH }}"
-      require: [git['opt/webapps']]
-
-  - name: Set permissions
+      home: /opt/webapps
+      require:
+      - Exec['fetch webapp repo']
+  - name: Change ownership of files
     file:
-      path: "{{ item }}"
+      path:
+      - /opt/webapps/files
+      - /opt/webapps/log
+      - /opt/webapps/tmp
+      - /opt/webapps/public
       owner: rails
       mode: '0755'
-      require: User[rails]
-    loop: "{{ ['{{ WEBAPP_PATH }}/files', '{{ WEBAPP_PATH }}/log', '{{ WEBAPP_PATH }}/tmp', '{{ WEBAPP_PATH }}/public']"}}"
-
+    become: true
   - name: Start unicorn
     upstart:
-      job:
-        description: unicorn app server
-        command: start-stop-daemon --start -c rails -d {{ WEBAPP_PATH }} --exec /usr/local/bin/bundle -- exec unicorn_rails -E production
-        require: [rake tasks, generate secret, Gemfile.local]
-```
+      name: unicorn
+      description: unicorn app server
+      command: start-stop-daemon --start -c rails -d /opt/webapps --exec /usr/local/bin/bundle
+        -- exec unicorn_rails -E production
+    become: true
+    require:
+    - Exec['rake tasks']
+    - Exec['generate secret']
+  - name: Disable default vhost
+    exec:
+      command: /usr/sbin/a2dissite default
+    become: true
+  - name: Create apache vhost
+    template:
+      src: webapp/webapp.erb
+      dest: /etc/apache2/sites-available/webapp
+    become: true
+    require:
+    - Exec['rake tasks']
+    - Exec['generate secret']
+    - Exec['disable default vhost']

@@ -1,38 +1,66 @@
-```yml
 ---
 - name: Create MySQL Database
-  hosts: localhost
+  hosts: all
   become: yes
-  gather_facts: no
   tasks:
-    - name: Check if mysql service is running
-      stat:
-        name: mysql
-      register: mysql_status
-    - debug:
-        msg: "{{ item }}"
-      with_item: mysql_status.ansible_facts.mysql.state
-    - debug:
-        msg: "mysql service is {{ item }}"
-      when: item != 'running'
-    - name: Create MySQL database
-      become_method: yes
-      become_user: root
-      block:
-        - name: Check if mysql command output matches expected value
-          shell: "/usr/bin/mysql -uroot -e \"show databases;\""
-          register: mysql_output
-        - debug:
-            msg: "{{ item }}"
-          when: item != "show databases;"
-        - debug:
-            msg: "mysql output is {{ item }}"
-          when: item == "show databases;"
-        - name: Create database
-          become_method: yes
-          become_user: root
-          block:
-            - name: Create database
-              mysql_db:
-                name: "{{ inventory_hostname }}-db"
-```
+    - name: Create database
+      mysql:
+        host: localhost
+        port: 3306
+        user: root
+        password: ''
+        state: latest
+        db_name: "{{ lookup('env', 'DB_NAME') }}"
+      when: mysql_state == "started"
+    - name: Insert into memory
+      insert_into_memory:
+        data:
+          - "create-{{ lookup('env', 'DB_NAME') }}:"
+
+---
+ 
+- name: Create MySQL Database ( fallback )
+  hosts: all
+  become: yes
+  tasks:
+    - name: Create database
+      mysql:
+        host: localhost
+        port: 3306
+        user: root
+        password: ''
+        state: latest
+        db_name: "{{ lookup('env', 'DB_NAME') }}"
+      when: mysql_state != "started"
+ 
+---
+ 
+- name: Ensure MySQL Database Exists
+  hosts: all
+  become: yes
+  tasks:
+    - name: Create database
+      mysql:
+        host: localhost
+        port: 3306
+        user: root
+        password: ''
+        state: latest
+        db_name: "{{ lookup('env', 'DB_NAME') }}"
+      when: mysql_state == "started"
+ 
+---
+ 
+- name: MySQL Database Creation Fallback
+  hosts: all
+  become: yes
+  tasks:
+    - name: Create database
+      mysql:
+        host: localhost
+        port: 3306
+        user: root
+        password: ''
+        state: latest
+        db_name: "{{ lookup('env', 'DB_NAME') }}"
+      when: mysql_state != "started"

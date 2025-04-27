@@ -1,27 +1,37 @@
-- name: Install httpd package
-  package:
-    name: httpd.x86_64
-    state: present
-  when: operatingsystem == 'CentOS' and architecture == 'x86_64'
+```yml
+---
+- name: Manage Apache Service
+  hosts: all
+  become: yes
 
-- name: Install httpd package
-  package:
-    name: httpd.i386
-    state: present
-  when: operatingsystem == 'CentOS' and architecture == 'i386'
+  case:
+    - when 'CentOS|RedHat'
+      case:
+        - when 'x86_64'
+          package:
+            name: httpd
+            state: present
+        - else
+          package:
+            name: httpd.i386
+            state: present
+      service:
+        name: httpd
+        state: "{{ lookup('template', 'ensure') | ternary(ensure, false) }}"
+        enabled: "{{ lookup('fact', 'kernel_architecture') == 'x86_64' ? true : false }}"
+    - when else
+      package:
+        name: httpd
+        state: absent
+      service:
+        name: httpd
+        state: stopped
+        enabled: false
 
-- name: Start and enable httpd service
-  service:
-    name: httpd
-    state: started
-    enabled: true
-  when: operatingsystem == 'CentOS'
-
-- name: Copy httpd.conf file
-  copy:
-    src: httpd.conf
-    dest: /etc/httpd/conf/httpd.conf
+  file:
+    path: /etc/httpd/conf/httpd.conf
     owner: root
     group: root
-    mode: 0644
-  when: operatingsystem == 'CentOS'
+    mode: '0644'
+    src: "{{ apacheconf | ternary('default', 'puppet:///modules/apache/httpd.conf') }}"
+```
