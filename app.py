@@ -21,7 +21,7 @@ logging.basicConfig(filename=logging_path, level=logging.DEBUG, format="%(asctim
 
 # === Page Config ===
 st.set_page_config(
-    page_title="IaC to Ansible",
+    page_title="Convert to Ansible",
     page_icon="🅰️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -326,7 +326,7 @@ st.markdown("""
     }
 </style>
 
-<div class="app-title-container">a
+<div class="app-title-container">
     <h3>🅰️ Ansible Converter</h3>
     <p>Transform IaC into Ansible playbooks with AI</p>
 </div>
@@ -341,8 +341,8 @@ with st.sidebar:
         from ai_modules.maas_model import MaasModel
         st.markdown("### 🔐 Simple Backend")
         maas_key = st.text_input("API Key", type="password", key="simple_key")
-        maas_url = st.text_input("Endpoint URL", value="https://your-maas-url", key="simple_url")
-        maas_model = st.text_input("Model ID", value="granite-8b-code-instruct-128k", key="simple_model")
+        maas_url = st.text_input("Endpoint URL", value="https://mixtral-8x7b-instruct-v0-1-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com:443", key="simple_url")
+        maas_model = st.text_input("Model ID", value="mistralai/Mixtral-8x7B-Instruct-v0.1", key="simple_model")
         maas_stream = st.checkbox("Enable Streaming", value=True, key="simple_stream")
 
         if all([maas_key, maas_url, maas_model]):

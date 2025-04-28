@@ -8,13 +8,24 @@ class MaasModel:
         self.model_name = model_name
         self.stream = stream
 
-        # Ensure /v1/completions path
+        # Ensure base URL ends in /v1
         if not endpoint_url.rstrip("/").endswith("/v1"):
             endpoint_url = endpoint_url.rstrip("/") + "/v1"
         self.endpoint_url = endpoint_url + "/completions"
 
-    def transform(self, code, context, stream_ui=False):
-        prompt = f"""As a software developer, convert this {context} to an Ansible Playbook.
+    def transform(self, code, context="", stream_ui=False, mode="convert"):
+        logging.info(f"[MaaS] transform() called with mode={mode} stream_ui={stream_ui}")
+
+        if mode == "analyze":
+            prompt = f"""As a DevOps expert, explain what the following infrastructure code does in plain English.
+Avoid YAML. Do not reformat the input. Just summarize what the automation code is doing.
+
+[INPUT]
+{code}
+[OUTPUT]
+"""
+        else:
+            prompt = f"""As a software developer, convert this {context or 'Chef or Puppet code'} to an Ansible Playbook.
 Only provide the YAML code (no explanations, no comments). Use proper indentation and formatting.
 
 [INPUT]
@@ -53,7 +64,7 @@ Only provide the YAML code (no explanations, no comments). Use proper indentatio
                                 chunk = json_obj["choices"][0]["text"]
                                 result += chunk
                                 if stream_ui:
-                                    yield chunk  # 👈 Stream to UI
+                                    yield chunk  # stream to frontend
                         except json.JSONDecodeError as err:
                             logging.warning(f"[MaaS] JSON decode error: {err}")
                 if not stream_ui:

@@ -1,7 +1,6 @@
 {
   "ingested": [],
   "skipped": [
-    "docs/ansible/CONTRIBUTE.adoc",
     "docs/ansible/README.adoc",
     "docs/ansible/_style/render.adoc",
     "docs/ansible/structures/README.adoc",
