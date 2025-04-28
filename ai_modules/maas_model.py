@@ -8,12 +8,12 @@ class MaasModel:
         self.model_name = model_name
         self.stream = stream
 
-        # Ensure /v1/completions path is used
+        # Ensure /v1/completions path
         if not endpoint_url.rstrip("/").endswith("/v1"):
             endpoint_url = endpoint_url.rstrip("/") + "/v1"
         self.endpoint_url = endpoint_url + "/completions"
 
-    def transform(self, code, context):
+    def transform(self, code, context, stream_ui=False):
         prompt = f"""As a software developer, convert this {context} to an Ansible Playbook.
 Only provide the YAML code (no explanations, no comments). Use proper indentation and formatting.
 
@@ -50,22 +50,24 @@ Only provide the YAML code (no explanations, no comments). Use proper indentatio
                         try:
                             json_obj = json.loads(line_str)
                             if "choices" in json_obj and json_obj["choices"]:
-                                result += json_obj["choices"][0]["text"]
+                                chunk = json_obj["choices"][0]["text"]
+                                result += chunk
+                                if stream_ui:
+                                    yield chunk  # 👈 Stream to UI
                         except json.JSONDecodeError as err:
                             logging.warning(f"[MaaS] JSON decode error: {err}")
-                return result
-
+                if not stream_ui:
+                    yield result
             else:
                 result = response.json()
                 logging.debug(f"[MaaS] Raw response: {result}")
-
                 choices = result.get("choices")
                 if not choices or not isinstance(choices, list) or not choices[0].get("text"):
                     logging.error(f"[MaaS] Unexpected response structure: {result}")
-                    return "MaaS response did not contain valid 'choices'."
-
-                return choices[0]["text"]
+                    yield "MaaS response did not contain valid 'choices'."
+                else:
+                    yield choices[0]["text"]
 
         except Exception as e:
             logging.exception("[MaaS] Error during prompt generation")
-            return f"Error contacting MaaS: {e}"
+            yield f"Error contacting MaaS: {e}"

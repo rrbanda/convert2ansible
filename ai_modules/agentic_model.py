@@ -1,47 +1,10 @@
 import logging
+import logging
 import os
 import yaml
 from llama_stack_client import LlamaStackClient
 from llama_stack_client.lib.agents.agent import Agent
 from llama_stack_client.lib.agents.event_logger import EventLogger
-
-# === Logging config ===
-try:
-    os.makedirs("/tmp/logs", exist_ok=True)
-    logging_path = "/tmp/logs/app.log"
-except Exception:
-    logging_path = "app.log"
-
-logging.basicConfig(
-    filename=logging_path,
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s"
-)
-
-# === YAML flattening utility for Ansible ===
-def flatten_blocks(playbook_yaml):
-    """Flattens recursive `block:` nesting in Ansible playbook."""
-    try:
-        data = yaml.safe_load(playbook_yaml)
-        for play in data:
-            tasks = play.get("tasks", [])
-            play["tasks"] = extract_flat_tasks(tasks)
-        return yaml.dump(data, sort_keys=False)
-    except Exception as e:
-        logging.warning(f"Failed to flatten blocks: {e}")
-        return playbook_yaml
-
-def extract_flat_tasks(tasks):
-    flat = []
-    for task in tasks:
-        if "block" in task:
-            flat.append({k: v for k, v in task.items() if k != "block"})
-            flat += extract_flat_tasks(task["block"])
-        else:
-            flat.append(task)
-    return flat
-
-# === AgenticModel class ===
 class AgenticModel:
     def __init__(self, maas_key, maas_model, base_url="http://localhost:8321", vector_dbs=None):
         if vector_dbs is None:
@@ -64,8 +27,8 @@ class AgenticModel:
             }
         )
 
-    def transform(self, code, mode="convert"):
-        logging.info(f"📝 transform() called with mode='{mode}'")
+    def transform(self, code, mode="convert", stream_ui=False):
+        logging.info(f"📝 transform() called with mode='{mode}', stream_ui={stream_ui}")
 
         # === Instructions based on mode ===
         if mode == "analyze":
@@ -80,7 +43,7 @@ Avoid YAML. Do not reformat the code.
 
 Explain what the infrastructure automation code is doing, as if to a DevOps engineer new to the codebase.
 """
-        else:  # mode == "convert"
+        else:
             instructions = """
 You are an expert infrastructure automation assistant.
 
@@ -103,7 +66,7 @@ Do not invent fictional modules.
 Respond with YAML ONLY.
 """
 
-        # === Dynamically create Agent instance ===
+        # === Dynamically create Agent ===
         agent = Agent(
             client=self.client,
             model="llama3.2:3b",
@@ -134,18 +97,20 @@ Respond with YAML ONLY.
             )
         except Exception as e:
             logging.error(f"❌ Failed to create session or turn: {e}")
-            return "", f"ERROR: {e}"
+            yield f"ERROR: {e}"
+            return
 
+        # === Stream back to frontend
         output = ""
         for log in EventLogger().log(turn):
             if hasattr(log, "content") and isinstance(log.content, str):
                 output += log.content
+                if stream_ui:
+                    yield log.content  # ⬅️ Stream incrementally
 
         output = output.strip()
 
-        if output:
-            logging.info(f"✅ Agent completed with {len(output.split())} tokens returned.")
-            return flatten_blocks(output) if mode == "convert" else output
-        else:
-            logging.warning("⚠️ Agent returned empty response.")
-            return "", "⚠️ No response from agent"
+        # Final return
+        if not stream_ui:
+            final = flatten_blocks(output) if mode == "convert" else output
+            yield final

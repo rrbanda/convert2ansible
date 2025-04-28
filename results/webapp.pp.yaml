@@ -2,10 +2,14 @@
 - name: Deploy Rail Web App
   hosts: all
   become: yes
-  gather_facts: no
 
   tasks:
-  - name: Install Required Packages
+  - name: Create web app directory
+    file:
+      path: /opt/webapps
+      state: directory
+
+  - name: Install dependencies
     package:
       name:
         - rubygems
@@ -14,89 +18,86 @@
         - libxslt-dev
         - libsqlite3-dev
         - libmysqlclient-dev
-    when: True
+    become: yes
 
   - name: Install Bundler
     package:
+      name: bundler
       provider: gem
-      require: rubygems
-    when: True
+    become: yes
+    require: rubygems
 
-  - name: Set up Apache Module
-    apache::module:
-      module: proxy_http
-    when: True
+  - name: Set up Apache module
+    apache:
+      module:
+        name: proxy_http
+    become: yes
 
-  - name: Create Directory
-    file:
-      path: /opt/webapps
-      state: directory
-    when: True
-
-  - name: Fetch Web App Repo
+  - name: Fetch web app repo
     exec:
       command: git clone {{ service_webapp_repo }} /opt/webapps
       path: /usr/bin/:/usr/local/bin/:/bin/
       creates: /opt/webapps
-    when: True
+    become: yes
+    require: File[/opt/webapps]
 
-  - name: Checkout Web App Tag
+  - name: Fetch web app tag
     exec:
       command: git checkout {{ service_webapp_tag }}
       path: /usr/bin/:/usr/local/bin/:/bin/
       cwd: /opt/webapps
-    when: True
+    become: yes
+    require: Exec:fetch webapp repo
 
-  - name: Install Unicorn
+  - name: Install unicorn
     file:
       path: /opt/webapps/Gemfile.local
       content: "gem 'unicorn'\n"
-      require: Exec[fetch webapp tag]
-    when: True
+    become: yes
+    require: Exec:fetch webapp tag
 
-  - name: Run Bundler Install
+  - name: Run bundle install
     exec:
       command: bundle install --without development test rmagick postgresql
       cwd: /opt/webapps
       path: /usr/bin/:/usr/local/bin/:/bin/
-    require: [File[Gemfile.local], Package[bundler]]
-    when: True
+    become: yes
+    require: File[/opt/webapps/Gemfile.local], Package[bundler]
 
-  - name: Generate Secret
+  - name: Generate secret
     exec:
       command: bundle exec rake generate_session_store
       cwd: /opt/webapps
       path: /usr/bin/:/usr/local/bin/:/bin/
-    require: Exec[bundle install]
-    when: True
+    become: yes
+    require: Exec:bundle install
 
-  - name: Set up Database
+  - name: Set up database connection
     template:
       src: webapp/database.yml.erb
       dest: /opt/webapps/config/database.yml
-      mode: '0644'
-    require: [Exec[rake tasks], Exec[generate secret]]
-    when: True
+    become: yes
+    require: Exec:bundle install
 
-  - name: Run Rake Tasks
+  - name: Run rake tasks
     exec:
       command: bundle exec rake db:migrate RAILS_ENV=production && bundle exec rake redmine:load_default_data RAILS_ENV=production REDMINE_LANG=en
       cwd: /opt/webapps
       path: /usr/bin/:/usr/local/bin/:/bin/
-    require: [File[database.yml], Exec[generate secret]]
-    when: True
+    become: yes
+    require: File[/opt/webapps/config/database.yml], Exec:generate secret
 
-  - name: Set up Unicorn User
+  - name: Set up unicorn user
     user:
       name: rails
-      comment: "rails"
+      comment: rails
       membership: minimum
-      shell: "/bin/sh"
+      shell: /bin/sh
       home: /opt/webapps
-    require: Exec[rake tasks]
-    when: True
+    become: yes
+    require: Exec:fetch webapp repo
 
-  - name: Set File Permissions
+  - name: Set file permissions
     file:
       path:
         - /opt/webapps/files
@@ -105,17 +106,15 @@
         - /opt/webapps/public
       owner: rails
       mode: '0755'
+    become: yes
     require: User[rails]
-    when: True
 
-  - name: Set up Apache Vhost
-    apache_vhost:
-      template: webapp/webapp.erb
-      require: [Exec[rake tasks], Exec[generate secret], Exec[disable default vhost]]
-    when: True
-
-  - name: Disable Default Vhost
-    exec:
-      command: /usr/sbin/a2dissite default
-    require: Package[apache]
-    when: True
+  - name: Set up Apache vhost
+    apache:
+      vhost:
+        name: webapp
+        template: webapp/webapp.erb
+      become: yes
+    become_method: yes
+    become_user: httpd
+    require: Exec:rake tasks generate secret disable default vhost
