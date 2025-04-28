@@ -7,17 +7,22 @@ import tempfile
 import subprocess
 from configparser import ConfigParser
 import urllib.parse
-
+import logging
+from pathlib import Path
 import streamlit as st
 import streamlit.components.v1 as components
 
 # === Logging ===
-try:
-    os.makedirs("/tmp/logs", exist_ok=True)
-    logging_path = "/tmp/logs/app.log"
-except Exception:
-    logging_path = "app.log"
-logging.basicConfig(filename=logging_path, level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
+# Setup logging properly before Streamlit starts
+if not logging.getLogger().hasHandlers():
+    log_dir = Path("logs")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    logging_path = log_dir / "app.log"
+    logging.basicConfig(
+        filename=str(logging_path),
+        level=logging.DEBUG,
+        format="%(asctime)s [%(levelname)s] %(message)s"
+    )
 
 # === Page Config ===
 st.set_page_config(
@@ -333,6 +338,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # === Sidebar Configuration ===
+# Sidebar Backend Selection
 with st.sidebar:
     st.sidebar.markdown("## ⚙️ Configuration")
     backend = st.radio("Choose Backend", ["simple", "agentic"], index=0)
@@ -341,8 +347,8 @@ with st.sidebar:
         from ai_modules.maas_model import MaasModel
         st.markdown("### 🔐 Simple Backend")
         maas_key = st.text_input("API Key", type="password", key="simple_key")
-        maas_url = st.text_input("Endpoint URL", value="https://mixtral-8x7b-instruct-v0-1-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com:443", key="simple_url")
-        maas_model = st.text_input("Model ID", value="mistralai/Mixtral-8x7B-Instruct-v0.1", key="simple_model")
+        maas_url = st.text_input("Endpoint URL", value="https://granite-8b-code-instruct-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com:443", key="simple_url")
+        maas_model = st.text_input("Model ID", value="granite-8b-code-instruct-128k", key="simple_model")
         maas_stream = st.checkbox("Enable Streaming", value=True, key="simple_stream")
 
         if all([maas_key, maas_url, maas_model]):
@@ -357,19 +363,13 @@ with st.sidebar:
 
     elif backend == "agentic":
         from ai_modules.agentic_model import AgenticModel
-        st.markdown("### 🧠 Agentic Backend")
-        maas_key = st.text_input("MaaS API Key", type="password", key="agentic_key")
-        maas_model = st.text_input("Remote Model ID", value="mistralai/Mixtral-8x7B-Instruct-v0.1", key="agentic_model")
-        base_url = st.text_input("LlamaStack URL", value="http://localhost:8321", key="agentic_url")
+        st.markdown("### 🧠 Agentic Backend (Local LlamaStack)")
 
-        if all([maas_key, maas_model, base_url]):
-            st.session_state.ai = AgenticModel(
-                maas_key=maas_key,
-                maas_model=maas_model,
-                base_url=base_url
-            )
-            st.session_state.backend_configured = True
-            st.markdown("<div class='success-message'>✅ Agentic backend configured.</div>", unsafe_allow_html=True)
+        # Immediately configure without needing key
+        st.session_state.ai = AgenticModel()
+        st.session_state.backend_configured = True
+        st.markdown("<div class='success-message'>✅ Agentic backend configured. Ready to select files.</div>", unsafe_allow_html=True)
+
     
     # Output folder hidden in Advanced Settings expander
     with st.expander("Advanced Settings"):
