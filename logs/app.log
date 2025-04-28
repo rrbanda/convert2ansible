@@ -890,3 +890,243 @@
 2025-04-28 18:25:18,113 [DEBUG] response_closed.complete
 2025-04-28 18:25:18,153 [DEBUG] close.started
 2025-04-28 18:25:18,153 [DEBUG] close.complete
+2025-04-28 18:33:29,201 [INFO] 🔌 Initializing AgenticModel for Chef/Puppet → Ansible conversion
+2025-04-28 18:33:29,201 [INFO] 📡 LlamaStack URL: http://localhost:8321
+2025-04-28 18:33:29,201 [INFO] 🧠 Model: llama3.2:3b
+2025-04-28 18:33:29,210 [DEBUG] Request options: {'method': 'get', 'url': '/v1/vector-dbs', 'post_parser': <function DataWrapper._unwrapper at 0x1152437e0>}
+2025-04-28 18:33:29,210 [DEBUG] Sending HTTP Request: GET http://localhost:8321/v1/vector-dbs
+2025-04-28 18:33:29,210 [DEBUG] connect_tcp.started host='localhost' port=8321 local_address=None timeout=5.0 socket_options=None
+2025-04-28 18:33:29,214 [DEBUG] connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x1156f6110>
+2025-04-28 18:33:29,214 [DEBUG] send_request_headers.started request=<Request [b'GET']>
+2025-04-28 18:33:29,214 [DEBUG] send_request_headers.complete
+2025-04-28 18:33:29,214 [DEBUG] send_request_body.started request=<Request [b'GET']>
+2025-04-28 18:33:29,214 [DEBUG] send_request_body.complete
+2025-04-28 18:33:29,214 [DEBUG] receive_response_headers.started request=<Request [b'GET']>
+2025-04-28 18:33:29,216 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'date', b'Mon, 28 Apr 2025 22:33:28 GMT'), (b'server', b'uvicorn'), (b'content-length', b'1240'), (b'content-type', b'application/json'), (b'x-trace-id', b'052dd3d7a0b78dd2e2e30ed82deafc38')])
+2025-04-28 18:33:29,216 [INFO] HTTP Request: GET http://localhost:8321/v1/vector-dbs "HTTP/1.1 200 OK"
+2025-04-28 18:33:29,216 [DEBUG] receive_response_body.started request=<Request [b'GET']>
+2025-04-28 18:33:29,216 [DEBUG] receive_response_body.complete
+2025-04-28 18:33:29,216 [DEBUG] response_closed.started
+2025-04-28 18:33:29,216 [DEBUG] response_closed.complete
+2025-04-28 18:33:29,216 [DEBUG] HTTP Response: GET http://localhost:8321/v1/vector-dbs "200 OK" Headers({'date': 'Mon, 28 Apr 2025 22:33:28 GMT', 'server': 'uvicorn', 'content-length': '1240', 'content-type': 'application/json', 'x-trace-id': '052dd3d7a0b78dd2e2e30ed82deafc38'})
+2025-04-28 18:33:29,217 [INFO] ✅ Vector database 'ansible_rules' already exists.
+2025-04-28 18:33:29,257 [DEBUG] close.started
+2025-04-28 18:33:29,257 [DEBUG] close.complete
+2025-04-28 18:33:31,590 [INFO] 🔌 Initializing AgenticModel for Chef/Puppet → Ansible conversion
+2025-04-28 18:33:31,590 [INFO] 📡 LlamaStack URL: http://localhost:8321
+2025-04-28 18:33:31,590 [INFO] 🧠 Model: llama3.2:3b
+2025-04-28 18:33:31,598 [DEBUG] Request options: {'method': 'get', 'url': '/v1/vector-dbs', 'post_parser': <function DataWrapper._unwrapper at 0x1152437e0>}
+2025-04-28 18:33:31,598 [DEBUG] Sending HTTP Request: GET http://localhost:8321/v1/vector-dbs
+2025-04-28 18:33:31,599 [DEBUG] connect_tcp.started host='localhost' port=8321 local_address=None timeout=5.0 socket_options=None
+2025-04-28 18:33:31,599 [DEBUG] connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x11685b790>
+2025-04-28 18:33:31,599 [DEBUG] send_request_headers.started request=<Request [b'GET']>
+2025-04-28 18:33:31,599 [DEBUG] send_request_headers.complete
+2025-04-28 18:33:31,599 [DEBUG] send_request_body.started request=<Request [b'GET']>
+2025-04-28 18:33:31,599 [DEBUG] send_request_body.complete
+2025-04-28 18:33:31,599 [DEBUG] receive_response_headers.started request=<Request [b'GET']>
+2025-04-28 18:33:31,600 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'date', b'Mon, 28 Apr 2025 22:33:31 GMT'), (b'server', b'uvicorn'), (b'content-length', b'1240'), (b'content-type', b'application/json'), (b'x-trace-id', b'a651bd9d46d3dfd6d1dde1f734d658d3')])
+2025-04-28 18:33:31,600 [INFO] HTTP Request: GET http://localhost:8321/v1/vector-dbs "HTTP/1.1 200 OK"
+2025-04-28 18:33:31,601 [DEBUG] receive_response_body.started request=<Request [b'GET']>
+2025-04-28 18:33:31,601 [DEBUG] receive_response_body.complete
+2025-04-28 18:33:31,601 [DEBUG] response_closed.started
+2025-04-28 18:33:31,601 [DEBUG] response_closed.complete
+2025-04-28 18:33:31,601 [DEBUG] HTTP Response: GET http://localhost:8321/v1/vector-dbs "200 OK" Headers({'date': 'Mon, 28 Apr 2025 22:33:31 GMT', 'server': 'uvicorn', 'content-length': '1240', 'content-type': 'application/json', 'x-trace-id': 'a651bd9d46d3dfd6d1dde1f734d658d3'})
+2025-04-28 18:33:31,602 [INFO] ✅ Vector database 'ansible_rules' already exists.
+2025-04-28 18:33:31,605 [INFO] 🚀 transform() called with mode='analyze', stream_ui=True
+2025-04-28 18:33:31,605 [INFO] 📄 Loaded instructions from tools/analyze_instructions.txt
+2025-04-28 18:33:31,605 [DEBUG] Request options: {'method': 'post', 'url': '/v1/agents', 'files': None, 'json_data': {'agent_config': {'model': 'llama3.2:3b', 'instructions': 'You are a DevOps automation expert.\n\nAnalyze the given input Chef or Puppet code carefully and explain in plain English what it is doing.\n\nSummarize key actions like package installation, service management, file manipulation, user creation, etc.\n\nBe concise, clear, and professional.\n\nDo not generate YAML, do not reformat code.\nOnly output human-readable English analysis.', 'toolgroups': [{'name': 'builtin::rag', 'args': {'vector_db_ids': ['ansible_rules'], 'top_k': 3}}], 'client_tools': [], 'max_infer_iters': 4, 'sampling_params': {'strategy': {'type': 'top_p', 'temperature': 0.3, 'top_p': 0.9}, 'max_tokens': 2048}, 'tool_config': {'tool_choice': 'auto'}}}}
+2025-04-28 18:33:31,606 [DEBUG] Sending HTTP Request: POST http://localhost:8321/v1/agents
+2025-04-28 18:33:31,606 [DEBUG] send_request_headers.started request=<Request [b'POST']>
+2025-04-28 18:33:31,606 [DEBUG] send_request_headers.complete
+2025-04-28 18:33:31,606 [DEBUG] send_request_body.started request=<Request [b'POST']>
+2025-04-28 18:33:31,606 [DEBUG] send_request_body.complete
+2025-04-28 18:33:31,606 [DEBUG] receive_response_headers.started request=<Request [b'POST']>
+2025-04-28 18:33:31,609 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'date', b'Mon, 28 Apr 2025 22:33:31 GMT'), (b'server', b'uvicorn'), (b'content-length', b'51'), (b'content-type', b'application/json'), (b'x-trace-id', b'9697e8416af5b5dc46f51fa289df1b4e')])
+2025-04-28 18:33:31,609 [INFO] HTTP Request: POST http://localhost:8321/v1/agents "HTTP/1.1 200 OK"
+2025-04-28 18:33:31,609 [DEBUG] receive_response_body.started request=<Request [b'POST']>
+2025-04-28 18:33:31,609 [DEBUG] receive_response_body.complete
+2025-04-28 18:33:31,609 [DEBUG] response_closed.started
+2025-04-28 18:33:31,609 [DEBUG] response_closed.complete
+2025-04-28 18:33:31,609 [DEBUG] HTTP Response: POST http://localhost:8321/v1/agents "200 OK" Headers({'date': 'Mon, 28 Apr 2025 22:33:31 GMT', 'server': 'uvicorn', 'content-length': '51', 'content-type': 'application/json', 'x-trace-id': '9697e8416af5b5dc46f51fa289df1b4e'})
+2025-04-28 18:33:31,609 [DEBUG] Request options: {'method': 'get', 'url': '/v1/tools', 'params': {'toolgroup_id': 'builtin::rag'}, 'post_parser': <function DataWrapper._unwrapper at 0x1152437e0>}
+2025-04-28 18:33:31,610 [DEBUG] Sending HTTP Request: GET http://localhost:8321/v1/tools?toolgroup_id=builtin%3A%3Arag
+2025-04-28 18:33:31,610 [DEBUG] send_request_headers.started request=<Request [b'GET']>
+2025-04-28 18:33:31,610 [DEBUG] send_request_headers.complete
+2025-04-28 18:33:31,610 [DEBUG] send_request_body.started request=<Request [b'GET']>
+2025-04-28 18:33:31,610 [DEBUG] send_request_body.complete
+2025-04-28 18:33:31,610 [DEBUG] receive_response_headers.started request=<Request [b'GET']>
+2025-04-28 18:33:31,611 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'date', b'Mon, 28 Apr 2025 22:33:31 GMT'), (b'server', b'uvicorn'), (b'content-length', b'689'), (b'content-type', b'application/json'), (b'x-trace-id', b'3a53385cf26f20ae6a6c44cd2ee50bc1')])
+2025-04-28 18:33:31,611 [INFO] HTTP Request: GET http://localhost:8321/v1/tools?toolgroup_id=builtin%3A%3Arag "HTTP/1.1 200 OK"
+2025-04-28 18:33:31,611 [DEBUG] receive_response_body.started request=<Request [b'GET']>
+2025-04-28 18:33:31,611 [DEBUG] receive_response_body.complete
+2025-04-28 18:33:31,611 [DEBUG] response_closed.started
+2025-04-28 18:33:31,611 [DEBUG] response_closed.complete
+2025-04-28 18:33:31,611 [DEBUG] HTTP Response: GET http://localhost:8321/v1/tools?toolgroup_id=builtin%3A%3Arag "200 OK" Headers({'date': 'Mon, 28 Apr 2025 22:33:31 GMT', 'server': 'uvicorn', 'content-length': '689', 'content-type': 'application/json', 'x-trace-id': '3a53385cf26f20ae6a6c44cd2ee50bc1'})
+2025-04-28 18:33:31,611 [DEBUG] Request options: {'method': 'post', 'url': '/v1/agents/fb4d7e95-4878-4852-8ee6-546a10d27c6a/session', 'files': None, 'json_data': {'session_name': 'convert2ansible-analyze'}}
+2025-04-28 18:33:31,612 [DEBUG] Sending HTTP Request: POST http://localhost:8321/v1/agents/fb4d7e95-4878-4852-8ee6-546a10d27c6a/session
+2025-04-28 18:33:31,612 [DEBUG] send_request_headers.started request=<Request [b'POST']>
+2025-04-28 18:33:31,612 [DEBUG] send_request_headers.complete
+2025-04-28 18:33:31,612 [DEBUG] send_request_body.started request=<Request [b'POST']>
+2025-04-28 18:33:31,612 [DEBUG] send_request_body.complete
+2025-04-28 18:33:31,612 [DEBUG] receive_response_headers.started request=<Request [b'POST']>
+2025-04-28 18:33:31,614 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'date', b'Mon, 28 Apr 2025 22:33:31 GMT'), (b'server', b'uvicorn'), (b'content-length', b'53'), (b'content-type', b'application/json'), (b'x-trace-id', b'e8555a801b83ea5dbbb03d812189a3b1')])
+2025-04-28 18:33:31,614 [INFO] HTTP Request: POST http://localhost:8321/v1/agents/fb4d7e95-4878-4852-8ee6-546a10d27c6a/session "HTTP/1.1 200 OK"
+2025-04-28 18:33:31,614 [DEBUG] receive_response_body.started request=<Request [b'POST']>
+2025-04-28 18:33:31,614 [DEBUG] receive_response_body.complete
+2025-04-28 18:33:31,614 [DEBUG] response_closed.started
+2025-04-28 18:33:31,615 [DEBUG] response_closed.complete
+2025-04-28 18:33:31,615 [DEBUG] HTTP Response: POST http://localhost:8321/v1/agents/fb4d7e95-4878-4852-8ee6-546a10d27c6a/session "200 OK" Headers({'date': 'Mon, 28 Apr 2025 22:33:31 GMT', 'server': 'uvicorn', 'content-length': '53', 'content-type': 'application/json', 'x-trace-id': 'e8555a801b83ea5dbbb03d812189a3b1'})
+2025-04-28 18:33:31,615 [DEBUG] Request options: {'method': 'post', 'url': '/v1/agents/fb4d7e95-4878-4852-8ee6-546a10d27c6a/session/aa1bb8e9-1fd7-46b0-964d-805b914176a0/turn', 'files': None, 'json_data': {'messages': [{'role': 'user', 'content': 'class apache_with_firewall {\n  package { \'httpd\':\n    ensure => installed,\n  }\n\n  service { \'httpd\':\n    ensure     => running,\n    enable     => true,\n    require    => Package[\'httpd\'],\n  }\n\n  file { \'/var/www/html/index.html\':\n    ensure  => file,\n    content => \'Welcome to Puppet-managed Apache!\',\n    mode    => \'0644\',\n    owner   => \'root\',\n    group   => \'root\',\n    require => Service[\'httpd\'],\n  }\n\n  exec { \'allow_http_traffic\':\n    command => \'/usr/sbin/ufw allow 80/tcp\',\n    unless  => \'/usr/sbin/ufw status | grep "80/tcp"\',\n    path    => [\'/usr/bin\', \'/usr/sbin\'],\n  }\n}\n'}], 'documents': None, 'stream': True, 'toolgroups': None}}
+2025-04-28 18:33:31,615 [DEBUG] Sending HTTP Request: POST http://localhost:8321/v1/agents/fb4d7e95-4878-4852-8ee6-546a10d27c6a/session/aa1bb8e9-1fd7-46b0-964d-805b914176a0/turn
+2025-04-28 18:33:31,615 [DEBUG] send_request_headers.started request=<Request [b'POST']>
+2025-04-28 18:33:31,616 [DEBUG] send_request_headers.complete
+2025-04-28 18:33:31,616 [DEBUG] send_request_body.started request=<Request [b'POST']>
+2025-04-28 18:33:31,616 [DEBUG] send_request_body.complete
+2025-04-28 18:33:31,616 [DEBUG] receive_response_headers.started request=<Request [b'POST']>
+2025-04-28 18:33:31,617 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'date', b'Mon, 28 Apr 2025 22:33:31 GMT'), (b'server', b'uvicorn'), (b'content-type', b'text/event-stream; charset=utf-8'), (b'x-trace-id', b'67e2a3ac8409419a1a5886145f2a8572'), (b'Transfer-Encoding', b'chunked')])
+2025-04-28 18:33:31,617 [INFO] HTTP Request: POST http://localhost:8321/v1/agents/fb4d7e95-4878-4852-8ee6-546a10d27c6a/session/aa1bb8e9-1fd7-46b0-964d-805b914176a0/turn "HTTP/1.1 200 OK"
+2025-04-28 18:33:31,617 [DEBUG] HTTP Response: POST http://localhost:8321/v1/agents/fb4d7e95-4878-4852-8ee6-546a10d27c6a/session/aa1bb8e9-1fd7-46b0-964d-805b914176a0/turn "200 OK" Headers({'date': 'Mon, 28 Apr 2025 22:33:31 GMT', 'server': 'uvicorn', 'content-type': 'text/event-stream; charset=utf-8', 'x-trace-id': '67e2a3ac8409419a1a5886145f2a8572', 'transfer-encoding': 'chunked'})
+2025-04-28 18:33:31,617 [DEBUG] receive_response_body.started request=<Request [b'POST']>
+2025-04-28 18:33:33,547 [INFO] 🔌 Initializing AgenticModel for Chef/Puppet → Ansible conversion
+2025-04-28 18:33:33,547 [INFO] 📡 LlamaStack URL: http://localhost:8321
+2025-04-28 18:33:33,547 [INFO] 🧠 Model: llama3.2:3b
+2025-04-28 18:33:33,560 [DEBUG] Request options: {'method': 'get', 'url': '/v1/vector-dbs', 'post_parser': <function DataWrapper._unwrapper at 0x1152437e0>}
+2025-04-28 18:33:33,560 [DEBUG] Sending HTTP Request: GET http://localhost:8321/v1/vector-dbs
+2025-04-28 18:33:33,560 [DEBUG] connect_tcp.started host='localhost' port=8321 local_address=None timeout=5.0 socket_options=None
+2025-04-28 18:33:33,562 [DEBUG] connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x116859910>
+2025-04-28 18:33:33,562 [DEBUG] send_request_headers.started request=<Request [b'GET']>
+2025-04-28 18:33:33,562 [DEBUG] send_request_headers.complete
+2025-04-28 18:33:33,562 [DEBUG] send_request_body.started request=<Request [b'GET']>
+2025-04-28 18:33:33,563 [DEBUG] send_request_body.complete
+2025-04-28 18:33:33,563 [DEBUG] receive_response_headers.started request=<Request [b'GET']>
+2025-04-28 18:33:33,564 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'date', b'Mon, 28 Apr 2025 22:33:33 GMT'), (b'server', b'uvicorn'), (b'content-length', b'1240'), (b'content-type', b'application/json'), (b'x-trace-id', b'5453d9c2d5dc1abe5f393b8e6160d5fa')])
+2025-04-28 18:33:33,564 [INFO] HTTP Request: GET http://localhost:8321/v1/vector-dbs "HTTP/1.1 200 OK"
+2025-04-28 18:33:33,564 [DEBUG] receive_response_body.started request=<Request [b'GET']>
+2025-04-28 18:33:33,564 [DEBUG] receive_response_body.complete
+2025-04-28 18:33:33,564 [DEBUG] response_closed.started
+2025-04-28 18:33:33,564 [DEBUG] response_closed.complete
+2025-04-28 18:33:33,564 [DEBUG] HTTP Response: GET http://localhost:8321/v1/vector-dbs "200 OK" Headers({'date': 'Mon, 28 Apr 2025 22:33:33 GMT', 'server': 'uvicorn', 'content-length': '1240', 'content-type': 'application/json', 'x-trace-id': '5453d9c2d5dc1abe5f393b8e6160d5fa'})
+2025-04-28 18:33:33,565 [INFO] ✅ Vector database 'ansible_rules' already exists.
+2025-04-28 18:33:33,570 [INFO] 🚀 transform() called with mode='analyze', stream_ui=True
+2025-04-28 18:33:33,570 [INFO] 📄 Loaded instructions from tools/analyze_instructions.txt
+2025-04-28 18:33:33,571 [DEBUG] Request options: {'method': 'post', 'url': '/v1/agents', 'files': None, 'json_data': {'agent_config': {'model': 'llama3.2:3b', 'instructions': 'You are a DevOps automation expert.\n\nAnalyze the given input Chef or Puppet code carefully and explain in plain English what it is doing.\n\nSummarize key actions like package installation, service management, file manipulation, user creation, etc.\n\nBe concise, clear, and professional.\n\nDo not generate YAML, do not reformat code.\nOnly output human-readable English analysis.', 'toolgroups': [{'name': 'builtin::rag', 'args': {'vector_db_ids': ['ansible_rules'], 'top_k': 3}}], 'client_tools': [], 'max_infer_iters': 4, 'sampling_params': {'strategy': {'type': 'top_p', 'temperature': 0.3, 'top_p': 0.9}, 'max_tokens': 2048}, 'tool_config': {'tool_choice': 'auto'}}}}
+2025-04-28 18:33:33,571 [DEBUG] Sending HTTP Request: POST http://localhost:8321/v1/agents
+2025-04-28 18:33:33,571 [DEBUG] send_request_headers.started request=<Request [b'POST']>
+2025-04-28 18:33:33,571 [DEBUG] send_request_headers.complete
+2025-04-28 18:33:33,571 [DEBUG] send_request_body.started request=<Request [b'POST']>
+2025-04-28 18:33:33,571 [DEBUG] send_request_body.complete
+2025-04-28 18:33:33,571 [DEBUG] receive_response_headers.started request=<Request [b'POST']>
+2025-04-28 18:33:33,574 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'date', b'Mon, 28 Apr 2025 22:33:33 GMT'), (b'server', b'uvicorn'), (b'content-length', b'51'), (b'content-type', b'application/json'), (b'x-trace-id', b'87bad5bb49df1915d5938511bf42caf5')])
+2025-04-28 18:33:33,574 [INFO] HTTP Request: POST http://localhost:8321/v1/agents "HTTP/1.1 200 OK"
+2025-04-28 18:33:33,574 [DEBUG] receive_response_body.started request=<Request [b'POST']>
+2025-04-28 18:33:33,575 [DEBUG] receive_response_body.complete
+2025-04-28 18:33:33,575 [DEBUG] response_closed.started
+2025-04-28 18:33:33,575 [DEBUG] response_closed.complete
+2025-04-28 18:33:33,575 [DEBUG] HTTP Response: POST http://localhost:8321/v1/agents "200 OK" Headers({'date': 'Mon, 28 Apr 2025 22:33:33 GMT', 'server': 'uvicorn', 'content-length': '51', 'content-type': 'application/json', 'x-trace-id': '87bad5bb49df1915d5938511bf42caf5'})
+2025-04-28 18:33:33,575 [DEBUG] Request options: {'method': 'get', 'url': '/v1/tools', 'params': {'toolgroup_id': 'builtin::rag'}, 'post_parser': <function DataWrapper._unwrapper at 0x1152437e0>}
+2025-04-28 18:33:33,575 [DEBUG] Sending HTTP Request: GET http://localhost:8321/v1/tools?toolgroup_id=builtin%3A%3Arag
+2025-04-28 18:33:33,575 [DEBUG] send_request_headers.started request=<Request [b'GET']>
+2025-04-28 18:33:33,575 [DEBUG] send_request_headers.complete
+2025-04-28 18:33:33,576 [DEBUG] send_request_body.started request=<Request [b'GET']>
+2025-04-28 18:33:33,576 [DEBUG] send_request_body.complete
+2025-04-28 18:33:33,576 [DEBUG] receive_response_headers.started request=<Request [b'GET']>
+2025-04-28 18:33:33,577 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'date', b'Mon, 28 Apr 2025 22:33:33 GMT'), (b'server', b'uvicorn'), (b'content-length', b'689'), (b'content-type', b'application/json'), (b'x-trace-id', b'8a224dd3dcec800efbbc2e3fb421c96e')])
+2025-04-28 18:33:33,577 [INFO] HTTP Request: GET http://localhost:8321/v1/tools?toolgroup_id=builtin%3A%3Arag "HTTP/1.1 200 OK"
+2025-04-28 18:33:33,577 [DEBUG] receive_response_body.started request=<Request [b'GET']>
+2025-04-28 18:33:33,577 [DEBUG] receive_response_body.complete
+2025-04-28 18:33:33,577 [DEBUG] response_closed.started
+2025-04-28 18:33:33,577 [DEBUG] response_closed.complete
+2025-04-28 18:33:33,577 [DEBUG] HTTP Response: GET http://localhost:8321/v1/tools?toolgroup_id=builtin%3A%3Arag "200 OK" Headers({'date': 'Mon, 28 Apr 2025 22:33:33 GMT', 'server': 'uvicorn', 'content-length': '689', 'content-type': 'application/json', 'x-trace-id': '8a224dd3dcec800efbbc2e3fb421c96e'})
+2025-04-28 18:33:33,578 [DEBUG] Request options: {'method': 'post', 'url': '/v1/agents/f43fc17b-2ac0-4d61-b7d2-63778287572d/session', 'files': None, 'json_data': {'session_name': 'convert2ansible-analyze'}}
+2025-04-28 18:33:33,578 [DEBUG] Sending HTTP Request: POST http://localhost:8321/v1/agents/f43fc17b-2ac0-4d61-b7d2-63778287572d/session
+2025-04-28 18:33:33,578 [DEBUG] send_request_headers.started request=<Request [b'POST']>
+2025-04-28 18:33:33,578 [DEBUG] send_request_headers.complete
+2025-04-28 18:33:33,578 [DEBUG] send_request_body.started request=<Request [b'POST']>
+2025-04-28 18:33:33,578 [DEBUG] send_request_body.complete
+2025-04-28 18:33:33,578 [DEBUG] receive_response_headers.started request=<Request [b'POST']>
+2025-04-28 18:33:33,581 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'date', b'Mon, 28 Apr 2025 22:33:33 GMT'), (b'server', b'uvicorn'), (b'content-length', b'53'), (b'content-type', b'application/json'), (b'x-trace-id', b'e9fe6ef4003fcab19a2194fc60289852')])
+2025-04-28 18:33:33,581 [INFO] HTTP Request: POST http://localhost:8321/v1/agents/f43fc17b-2ac0-4d61-b7d2-63778287572d/session "HTTP/1.1 200 OK"
+2025-04-28 18:33:33,581 [DEBUG] receive_response_body.started request=<Request [b'POST']>
+2025-04-28 18:33:33,581 [DEBUG] receive_response_body.complete
+2025-04-28 18:33:33,581 [DEBUG] response_closed.started
+2025-04-28 18:33:33,581 [DEBUG] response_closed.complete
+2025-04-28 18:33:33,581 [DEBUG] HTTP Response: POST http://localhost:8321/v1/agents/f43fc17b-2ac0-4d61-b7d2-63778287572d/session "200 OK" Headers({'date': 'Mon, 28 Apr 2025 22:33:33 GMT', 'server': 'uvicorn', 'content-length': '53', 'content-type': 'application/json', 'x-trace-id': 'e9fe6ef4003fcab19a2194fc60289852'})
+2025-04-28 18:33:33,581 [DEBUG] Request options: {'method': 'post', 'url': '/v1/agents/f43fc17b-2ac0-4d61-b7d2-63778287572d/session/556b12c7-0ca5-4b52-ad7d-d966810dbd79/turn', 'files': None, 'json_data': {'messages': [{'role': 'user', 'content': 'class apache_with_firewall {\n  package { \'httpd\':\n    ensure => installed,\n  }\n\n  service { \'httpd\':\n    ensure     => running,\n    enable     => true,\n    require    => Package[\'httpd\'],\n  }\n\n  file { \'/var/www/html/index.html\':\n    ensure  => file,\n    content => \'Welcome to Puppet-managed Apache!\',\n    mode    => \'0644\',\n    owner   => \'root\',\n    group   => \'root\',\n    require => Service[\'httpd\'],\n  }\n\n  exec { \'allow_http_traffic\':\n    command => \'/usr/sbin/ufw allow 80/tcp\',\n    unless  => \'/usr/sbin/ufw status | grep "80/tcp"\',\n    path    => [\'/usr/bin\', \'/usr/sbin\'],\n  }\n}\n'}], 'documents': None, 'stream': True, 'toolgroups': None}}
+2025-04-28 18:33:33,582 [DEBUG] Sending HTTP Request: POST http://localhost:8321/v1/agents/f43fc17b-2ac0-4d61-b7d2-63778287572d/session/556b12c7-0ca5-4b52-ad7d-d966810dbd79/turn
+2025-04-28 18:33:33,582 [DEBUG] send_request_headers.started request=<Request [b'POST']>
+2025-04-28 18:33:33,582 [DEBUG] send_request_headers.complete
+2025-04-28 18:33:33,582 [DEBUG] send_request_body.started request=<Request [b'POST']>
+2025-04-28 18:33:33,582 [DEBUG] send_request_body.complete
+2025-04-28 18:33:33,582 [DEBUG] receive_response_headers.started request=<Request [b'POST']>
+2025-04-28 18:33:33,583 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'date', b'Mon, 28 Apr 2025 22:33:33 GMT'), (b'server', b'uvicorn'), (b'content-type', b'text/event-stream; charset=utf-8'), (b'x-trace-id', b'e47df5736d4c1e4792670339c9edefc3'), (b'Transfer-Encoding', b'chunked')])
+2025-04-28 18:33:33,583 [INFO] HTTP Request: POST http://localhost:8321/v1/agents/f43fc17b-2ac0-4d61-b7d2-63778287572d/session/556b12c7-0ca5-4b52-ad7d-d966810dbd79/turn "HTTP/1.1 200 OK"
+2025-04-28 18:33:33,583 [DEBUG] HTTP Response: POST http://localhost:8321/v1/agents/f43fc17b-2ac0-4d61-b7d2-63778287572d/session/556b12c7-0ca5-4b52-ad7d-d966810dbd79/turn "200 OK" Headers({'date': 'Mon, 28 Apr 2025 22:33:33 GMT', 'server': 'uvicorn', 'content-type': 'text/event-stream; charset=utf-8', 'x-trace-id': 'e47df5736d4c1e4792670339c9edefc3', 'transfer-encoding': 'chunked'})
+2025-04-28 18:33:33,583 [DEBUG] receive_response_body.started request=<Request [b'POST']>
+2025-04-28 18:33:38,044 [DEBUG] receive_response_body.complete
+2025-04-28 18:33:38,044 [DEBUG] response_closed.started
+2025-04-28 18:33:38,044 [DEBUG] response_closed.complete
+2025-04-28 18:33:38,070 [DEBUG] close.started
+2025-04-28 18:33:38,070 [DEBUG] close.complete
+2025-04-28 18:33:38,070 [DEBUG] close.started
+2025-04-28 18:33:38,070 [DEBUG] close.complete
+2025-04-28 18:33:38,378 [DEBUG] receive_response_body.complete
+2025-04-28 18:33:38,378 [DEBUG] response_closed.started
+2025-04-28 18:33:38,378 [DEBUG] response_closed.complete
+2025-04-28 18:33:38,379 [INFO] 🚀 transform() called with mode='convert', stream_ui=True
+2025-04-28 18:33:38,379 [INFO] 📄 Loaded instructions from tools/convert_instructions.txt
+2025-04-28 18:33:38,380 [DEBUG] Request options: {'method': 'post', 'url': '/v1/agents', 'files': None, 'json_data': {'agent_config': {'model': 'llama3.2:3b', 'instructions': 'You are an expert DevOps assistant specializing in converting Chef and Puppet code into Ansible playbooks.\n\nTranslate the input into a clean, correct, and minimal Ansible playbook in YAML format.\n\nStrict rules:\n- Use only valid YAML with correct indentation.\n- Use appropriate modules like apt, yum, service, copy, template, etc.\n- Avoid blocks unless absolutely needed.\n- Prefer flattened tasks and clear task names.\n- No markdown, no explanations, no code comments.\n- Output Ansible YAML only.', 'toolgroups': [{'name': 'builtin::rag', 'args': {'vector_db_ids': ['ansible_rules'], 'top_k': 3}}], 'client_tools': [], 'max_infer_iters': 4, 'sampling_params': {'strategy': {'type': 'top_p', 'temperature': 0.3, 'top_p': 0.9}, 'max_tokens': 2048}, 'tool_config': {'tool_choice': 'auto'}}}}
+2025-04-28 18:33:38,381 [DEBUG] Sending HTTP Request: POST http://localhost:8321/v1/agents
+2025-04-28 18:33:38,381 [DEBUG] send_request_headers.started request=<Request [b'POST']>
+2025-04-28 18:33:38,382 [DEBUG] send_request_headers.complete
+2025-04-28 18:33:38,382 [DEBUG] send_request_body.started request=<Request [b'POST']>
+2025-04-28 18:33:38,382 [DEBUG] send_request_body.complete
+2025-04-28 18:33:38,382 [DEBUG] receive_response_headers.started request=<Request [b'POST']>
+2025-04-28 18:33:38,385 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'date', b'Mon, 28 Apr 2025 22:33:37 GMT'), (b'server', b'uvicorn'), (b'content-length', b'51'), (b'content-type', b'application/json'), (b'x-trace-id', b'46100923b92013175abb5a06427d2d8a')])
+2025-04-28 18:33:38,385 [INFO] HTTP Request: POST http://localhost:8321/v1/agents "HTTP/1.1 200 OK"
+2025-04-28 18:33:38,385 [DEBUG] receive_response_body.started request=<Request [b'POST']>
+2025-04-28 18:33:38,385 [DEBUG] receive_response_body.complete
+2025-04-28 18:33:38,385 [DEBUG] response_closed.started
+2025-04-28 18:33:38,385 [DEBUG] response_closed.complete
+2025-04-28 18:33:38,385 [DEBUG] HTTP Response: POST http://localhost:8321/v1/agents "200 OK" Headers({'date': 'Mon, 28 Apr 2025 22:33:37 GMT', 'server': 'uvicorn', 'content-length': '51', 'content-type': 'application/json', 'x-trace-id': '46100923b92013175abb5a06427d2d8a'})
+2025-04-28 18:33:38,386 [DEBUG] Request options: {'method': 'get', 'url': '/v1/tools', 'params': {'toolgroup_id': 'builtin::rag'}, 'post_parser': <function DataWrapper._unwrapper at 0x1152437e0>}
+2025-04-28 18:33:38,386 [DEBUG] Sending HTTP Request: GET http://localhost:8321/v1/tools?toolgroup_id=builtin%3A%3Arag
+2025-04-28 18:33:38,386 [DEBUG] send_request_headers.started request=<Request [b'GET']>
+2025-04-28 18:33:38,386 [DEBUG] send_request_headers.complete
+2025-04-28 18:33:38,386 [DEBUG] send_request_body.started request=<Request [b'GET']>
+2025-04-28 18:33:38,386 [DEBUG] send_request_body.complete
+2025-04-28 18:33:38,386 [DEBUG] receive_response_headers.started request=<Request [b'GET']>
+2025-04-28 18:33:38,387 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'date', b'Mon, 28 Apr 2025 22:33:37 GMT'), (b'server', b'uvicorn'), (b'content-length', b'689'), (b'content-type', b'application/json'), (b'x-trace-id', b'0cea93b2fc0347ab657377e7799886cb')])
+2025-04-28 18:33:38,387 [INFO] HTTP Request: GET http://localhost:8321/v1/tools?toolgroup_id=builtin%3A%3Arag "HTTP/1.1 200 OK"
+2025-04-28 18:33:38,387 [DEBUG] receive_response_body.started request=<Request [b'GET']>
+2025-04-28 18:33:38,387 [DEBUG] receive_response_body.complete
+2025-04-28 18:33:38,387 [DEBUG] response_closed.started
+2025-04-28 18:33:38,387 [DEBUG] response_closed.complete
+2025-04-28 18:33:38,387 [DEBUG] HTTP Response: GET http://localhost:8321/v1/tools?toolgroup_id=builtin%3A%3Arag "200 OK" Headers({'date': 'Mon, 28 Apr 2025 22:33:37 GMT', 'server': 'uvicorn', 'content-length': '689', 'content-type': 'application/json', 'x-trace-id': '0cea93b2fc0347ab657377e7799886cb'})
+2025-04-28 18:33:38,387 [DEBUG] Request options: {'method': 'post', 'url': '/v1/agents/fd3f4392-7aa6-4ce0-93cc-fb3362986fe4/session', 'files': None, 'json_data': {'session_name': 'convert2ansible-convert'}}
+2025-04-28 18:33:38,388 [DEBUG] Sending HTTP Request: POST http://localhost:8321/v1/agents/fd3f4392-7aa6-4ce0-93cc-fb3362986fe4/session
+2025-04-28 18:33:38,388 [DEBUG] send_request_headers.started request=<Request [b'POST']>
+2025-04-28 18:33:38,388 [DEBUG] send_request_headers.complete
+2025-04-28 18:33:38,388 [DEBUG] send_request_body.started request=<Request [b'POST']>
+2025-04-28 18:33:38,388 [DEBUG] send_request_body.complete
+2025-04-28 18:33:38,388 [DEBUG] receive_response_headers.started request=<Request [b'POST']>
+2025-04-28 18:33:38,389 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'date', b'Mon, 28 Apr 2025 22:33:37 GMT'), (b'server', b'uvicorn'), (b'content-length', b'53'), (b'content-type', b'application/json'), (b'x-trace-id', b'790c120ccc16768cca5ca6927bd9bbce')])
+2025-04-28 18:33:38,389 [INFO] HTTP Request: POST http://localhost:8321/v1/agents/fd3f4392-7aa6-4ce0-93cc-fb3362986fe4/session "HTTP/1.1 200 OK"
+2025-04-28 18:33:38,389 [DEBUG] receive_response_body.started request=<Request [b'POST']>
+2025-04-28 18:33:38,389 [DEBUG] receive_response_body.complete
+2025-04-28 18:33:38,389 [DEBUG] response_closed.started
+2025-04-28 18:33:38,389 [DEBUG] response_closed.complete
+2025-04-28 18:33:38,389 [DEBUG] HTTP Response: POST http://localhost:8321/v1/agents/fd3f4392-7aa6-4ce0-93cc-fb3362986fe4/session "200 OK" Headers({'date': 'Mon, 28 Apr 2025 22:33:37 GMT', 'server': 'uvicorn', 'content-length': '53', 'content-type': 'application/json', 'x-trace-id': '790c120ccc16768cca5ca6927bd9bbce'})
+2025-04-28 18:33:38,390 [DEBUG] Request options: {'method': 'post', 'url': '/v1/agents/fd3f4392-7aa6-4ce0-93cc-fb3362986fe4/session/6b7754cc-1427-477c-af74-6f94eb9e60b5/turn', 'files': None, 'json_data': {'messages': [{'role': 'user', 'content': 'class apache_with_firewall {\n  package { \'httpd\':\n    ensure => installed,\n  }\n\n  service { \'httpd\':\n    ensure     => running,\n    enable     => true,\n    require    => Package[\'httpd\'],\n  }\n\n  file { \'/var/www/html/index.html\':\n    ensure  => file,\n    content => \'Welcome to Puppet-managed Apache!\',\n    mode    => \'0644\',\n    owner   => \'root\',\n    group   => \'root\',\n    require => Service[\'httpd\'],\n  }\n\n  exec { \'allow_http_traffic\':\n    command => \'/usr/sbin/ufw allow 80/tcp\',\n    unless  => \'/usr/sbin/ufw status | grep "80/tcp"\',\n    path    => [\'/usr/bin\', \'/usr/sbin\'],\n  }\n}\n'}], 'documents': None, 'stream': True, 'toolgroups': None}}
+2025-04-28 18:33:38,390 [DEBUG] Sending HTTP Request: POST http://localhost:8321/v1/agents/fd3f4392-7aa6-4ce0-93cc-fb3362986fe4/session/6b7754cc-1427-477c-af74-6f94eb9e60b5/turn
+2025-04-28 18:33:38,390 [DEBUG] send_request_headers.started request=<Request [b'POST']>
+2025-04-28 18:33:38,390 [DEBUG] send_request_headers.complete
+2025-04-28 18:33:38,390 [DEBUG] send_request_body.started request=<Request [b'POST']>
+2025-04-28 18:33:38,390 [DEBUG] send_request_body.complete
+2025-04-28 18:33:38,390 [DEBUG] receive_response_headers.started request=<Request [b'POST']>
+2025-04-28 18:33:38,391 [DEBUG] receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'date', b'Mon, 28 Apr 2025 22:33:37 GMT'), (b'server', b'uvicorn'), (b'content-type', b'text/event-stream; charset=utf-8'), (b'x-trace-id', b'214fbb9efd0fc672c7f00a4ed371824d'), (b'Transfer-Encoding', b'chunked')])
+2025-04-28 18:33:38,391 [INFO] HTTP Request: POST http://localhost:8321/v1/agents/fd3f4392-7aa6-4ce0-93cc-fb3362986fe4/session/6b7754cc-1427-477c-af74-6f94eb9e60b5/turn "HTTP/1.1 200 OK"
+2025-04-28 18:33:38,391 [DEBUG] HTTP Response: POST http://localhost:8321/v1/agents/fd3f4392-7aa6-4ce0-93cc-fb3362986fe4/session/6b7754cc-1427-477c-af74-6f94eb9e60b5/turn "200 OK" Headers({'date': 'Mon, 28 Apr 2025 22:33:37 GMT', 'server': 'uvicorn', 'content-type': 'text/event-stream; charset=utf-8', 'x-trace-id': '214fbb9efd0fc672c7f00a4ed371824d', 'transfer-encoding': 'chunked'})
+2025-04-28 18:33:38,391 [DEBUG] receive_response_body.started request=<Request [b'POST']>
+2025-04-28 18:33:42,423 [DEBUG] receive_response_body.complete
+2025-04-28 18:33:42,424 [DEBUG] response_closed.started
+2025-04-28 18:33:42,424 [DEBUG] response_closed.complete

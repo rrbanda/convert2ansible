@@ -1,141 +1,215 @@
-# 🧙‍♂️ Convert to Ansible
-Convert to Ansible is a smart, expandable Python-based tool that converts [Puppet](https://www.puppet.com) modules or [Chef](https://www.chef.io) recipes into clean, production-grade [Ansible](https://docs.ansible.com) playbooks using Gen AI.
+# 🅰️ Convert Chef/Puppet to Ansible Playbooks using LlamaStack Agents (RAG-powered)
 
-It supports:
-- **Local Ollama** for offline inference
-- **MaaS (Model-as-a-Service)** with `granite-8b-code-instruct-128k` for enterprise-grade generation
-- **Agentic mode with RAG**: combines local **LlamaStack** RAG with remote **MaaS** for high-quality playbooks
+Welcome to **Convert2Ansible** —  
+an AI-powered tool to **analyze** and **convert** Chef recipes or Puppet manifests into clean, production-ready **Ansible Playbooks**,  
+powered by **LlamaStack Agents** and **Retrieval-Augmented Generation (RAG)**.
+
+This project combines a **local LlamaStack server**, **Ollama model serving**, and a **Streamlit UI** to streamline Infrastructure-as-Code modernization.
 
 ---
 
-### 📐 High level Architecture
+## 🚀 What This Solution Does
 
-```text
-                        +-------------------+
-                        |   User Interface  |
-                        | (Streamlit UI App)|
-                        +---------+---------+
-                                  |
-                                  v
-                +-----------------------------+
-                |       Backend Selector      |
-                |  [ollama | maas | agentic]  |
-                +--------+----------+---------+
-                         |          |
-            +------------+          +---------------------+
-            |                                     |
-   +--------v--------+                   +--------v--------+
-   | Ollama Runtime  |                   |  Agentic Backend |
-   | (local LLMs)    |                   | using LlamaStack |
-   +-----------------+                   +--------+--------+
-                                                 |
-                                                 v
-         +------------------- RAG + MaaS Agent Pipeline --------------------+
-         |                                                                  |
-         |  LlamaStack Agent (local)                                        |
-         |  └── uses builtin::rag + embeddings (MiniLM, Ollama, etc.)       |
-         |                                                                  |
-         |  Generation handled by → Granite 8B Code Instruct via MaaS       |
-         +------------------------------------------------------------------+
+- **Chef/Puppet → Ansible Playbook Conversion:**
+  - Upload, browse, or Git-clone Chef/Puppet code.
+  - An agent analyzes the code, retrieves best practices via RAG, and generates clean Ansible Playbooks.
+
+- **Code Analysis (Explain Mode):**
+  - Alternatively, you can ask the agent to **analyze** your code —  
+    it explains what the Chef/Puppet scripts are doing, in professional plain English.
+
+- **Streaming UI:**
+  - Results stream live into the Streamlit interface: side-by-side Analysis and Playbook views.
+
+- **Built-in RAG Retrieval:**
+  - The agent uses a custom `ansible_rules` vector database to fetch Ansible best practices during playbook generation.
+
+- **Agentic Execution:**
+  - Everything is done by LlamaStack Agents — no direct LLM calls — making it modular, explainable, and extendable.
+
+---
+
+# ⚙️ Setup Instructions
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-org/convert2ansible.git
+cd convert2ansible
 ```
 
 ---
 
-### 🚀 How to Use
+### 2. Set Up Python Environment
 
-Tested with Python 3.11+
+**Create and activate a virtual environment:**
 
-#### 1. Clone the repo
 ```bash
-git clone https://github.com/bpaskin/Automation-Code-SorcererX.git
-cd Automation-Code-SorcererX
-```
-
-#### 2. Setup a virtual environment
-```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-#### 3. Install dependencies
+---
+
+### 3. Install Required Python Packages
+
+**Install dependencies from `requirements.txt`:**
+
 ```bash
 pip install -r requirements.txt
 ```
 
-#### 4. Edit configuration files
-- `settings.config` for general paths and default backend
-- `config.yaml` for model settings (Ollama, LlamaStack, MaaS)
+---
 
-Example `config.yaml`:
+### 4. Start Ollama and Load Granite Model
 
-```yaml
-default: local
+**In a new terminal:**
 
-llama_stack:
-  local:
-    base_url: http://localhost:8321
-    model: llama3.2:3b
-
-  maas:
-    base_url: https://granite-8b-code-instruct-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com/v1
-    model: granite-8b-code-instruct-128k
-    api_key: "YOUR_MAAS_API_KEY"
+```bash
+ollama run granite-code:8b
 ```
+
+- This starts the `granite-code:8b` model locally for inference.
 
 ---
 
-### 💻 Launch the App (Streamlit UI)
+### 5. Build and Run the LlamaStack Server
+
+**In another new terminal:**
+
+```bash
+INFERENCE_MODEL=llama3.2:3b uv run --with llama-stack llama stack build --template ollama --image-type venv --run
+```
+
+- This builds and starts your local LlamaStack server, connected to your Ollama model.
+
+---
+
+### 6. Configure and Register Your Model
+
+**In your project virtual environment:**
+
+- Configure the LlamaStack client:
+
+```bash
+llama-stack-client configure --endpoint http://localhost:8321 --api-key none
+```
+
+- Register your granite model:
+
+```bash
+llama-stack-client models register granite-code:8b
+```
+
+- Confirm that the model is registered:
+
+```bash
+llama-stack-client models list
+```
+
+You should see `granite-code:8b` and `llama3.2:3b` listed.
+
+---
+
+### 7. Launch the Streamlit App
+
+**Still in your project root with the virtual environment activated:**
 
 ```bash
 streamlit run app.py
 ```
 
-#### Features:
-- Upload or browse code files (`.pp`, `.rb`, `.yml`)
-- Convert using **Ollama**, **MaaS**, or the **Agentic RAG+MaaS** pipeline
-- Output clean Ansible playbooks
-- Git repo integration with tag filtering
-- Linting (optional extension)
+The Streamlit UI will open at [http://localhost:8501](http://localhost:8501).
 
 ---
 
-### 📂 Project Structure
+## 📚 How to Use the App
 
-```text
-├── app.py                    # Streamlit UI
-├── ai_modules/
-│   ├── ollama_explanator.py
-│   ├── maas_model.py
-│   └── agentic_model.py     # Agentic backend using LlamaStack + MaaS
-├── tools/
-│   └── convert2ansible_agent.py
-├── config.yaml
-├── settings.config
-├── uploads/
-├── results/
+| Step | Action |
+|:---|:---|
+| 1 | Select **Agentic** backend in the sidebar. |
+| 2 | Choose your **file source**: Upload, Browse local files, or Git Clone. |
+| 3 | Upload or select Chef/Puppet files for analysis or conversion. |
+| 4 | Click **🚀 Start Conversion**. |
+| 5 | Watch live **Analysis** and **Ansible Playbook** generation side-by-side! |
+| 6 | Download final playbooks and summaries from the interface if needed. |
+
+---
+
+## 🧠 Internal Agent Architecture
+
+```plaintext
+User Input (Chef/Puppet Code)
+          ↓
+AgenticModel.transform(mode="analyze" or "convert")
+          ↓
+Creates LlamaStack Agent dynamically
+          ↓
+    ┌───────────────────────────────────────┐
+    │ builtin::rag Tool (Vector DB: ansible_rules) │
+    └───────────────────────────────────────┘
+          ↓ (retrieved best practices)
+Agent enriches context
+          ↓
+LLM Inference (via LlamaStack Model: llama3.2:3b)
+          ↓
+Streaming Output
+          ↓
+Frontend Display (Streamlit)
+          ↓
+Optional Post-processing (sanitize YAML, flatten blocks)
+          ↓
+Final Analysis / Playbook Output
 ```
 
 ---
 
-### 🧠 VectorDB Requirements (Agentic mode)
-Ensure your LlamaStack server has these vector DBs created:
+# 📦 Project Structure
 
-- `puppet_docs`
-- `chef_docs`
-
-You can preload sample content via the LlamaStack admin or your own ingest script.
+```plaintext
+├── app.py                    # Streamlit UI application
+├── ai_modules/
+│   └── agentic_model.py       # Agent wrapper handling inference
+├── tools/
+│   ├── analyze_instructions.txt  # Text prompt for analysis mode
+│   └── convert_instructions.txt  # Text prompt for convert mode
+├── uploads/                  # Uploaded input files
+├── results/                   # Generated playbooks and summaries
+├── settings.config            # Settings (e.g., default folders)
+├── logs/
+│   └── app.log                 # Logging output
+└── README.md                  # This file!
+```
 
 ---
 
-### 🤝 Contributions
+# 🛡️ Key Features
 
-Pull requests, issues, and feature suggestions are welcome!
+- ✅ True agentic execution (no direct LLM prompt hacking).
+- ✅ Best-practice Ansible playbook generation via RAG enrichment.
+- ✅ Automatic creation of `ansible_rules` vector database.
+- ✅ Externalized instruction prompts (easy to customize).
+- ✅ Full logging (`logs/app.log`).
+- ✅ Streaming live output for smooth UI experience.
 
 ---
 
-⚠️ Disclaimer
+# 📢 Notes
 
-   Convert to Ansible is a fun project created for experimenting with the tech stack and evaluating the responses . 
-   It is not officially supported by any enterprise.
+- Playbooks generated assume a **RHEL-based** system (preferring `yum` over `apt`).
+- `when: true` conditions are automatically removed if unnecessary.
+- `.erb` templates should be replaced by `.j2` templates manually after conversion (or post-processing improvements can be added).
+
+---
+
+# ❤️ Contributing
+
+We welcome PRs, issues, suggestions, and ideas to improve this project!
+
+---
+
+# 📜 License
+
+MIT License
 
 ---
